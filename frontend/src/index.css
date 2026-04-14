@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --color-primary: #b6a0ff;
@@ -66,3 +66,8 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
   to   { opacity: 1; transform: translateY(0); }
 }
 .msg-enter { animation: fadeInUp 0.2s ease-out; }
+@keyframes bgZoom {
+  0%   { transform: scale(1) translateX(0); }
+  50%  { transform: scale(1.15) translateX(-1%); }
+  100% { transform: scale(1.08) translateX(1%); }
+}

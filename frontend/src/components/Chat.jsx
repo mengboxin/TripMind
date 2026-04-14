@@ -1,27 +1,34 @@
-﻿import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import DestinationsView from "./views/DestinationsView";
+import ItineraryView from "./views/ItineraryView";
+import ConciergeView from "./views/ConciergeView";
+import FavoritesView from "./views/FavoritesView";
+import SettingsView from "./views/SettingsView";
+import HelpView from "./views/HelpView";
+import WorldMapView from "./views/WorldMapView";
 
 const API = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 
 const C = {
-  surface: "#0e0e13",
-  surfaceContainer: "#19191f",
-  surfaceContainerHigh: "#1f1f26",
-  surfaceContainerLow: "#131318",
-  onSurface: "#f6f2fa",
-  onSurfaceVariant: "#acaab1",
+  surface: "#0d0d14",
+  surfaceContainer: "#13131f",
+  surfaceContainerHigh: "#1a1a2e",
+  surfaceContainerLow: "#0f0f1a",
+  onSurface: "#f0eeff",
+  onSurfaceVariant: "#b8b5cc",
   primary: "#b6a0ff",
   secondary: "#8596ff",
-  secondaryContainer: "#293ca0",
-  sidebar: "rgba(3,3,8,0.85)",
-  header: "rgba(3,3,8,0.75)",
+  secondaryContainer: "#1e2060",
+  sidebar: "rgba(8,6,20,0.92)",
+  header: "rgba(8,6,20,0.82)",
 };
 
 const BENTO = [
   { key:"itinerary", col:"md:col-span-2", row:"md:row-span-2",
-    img:"https://lh3.googleusercontent.com/aida-public/AB6AXuBy8HZgBancUNTXK7x2CE-Bh2NZ1D5iLbSom4UfFgDZyiy6fUBNYBM2hvdaaNd1qYIdBspdnWd1z5njF7PpzUfKN_C164tFdgEE2eLN0V8wcVs_dY09MZoNk6RJLXcKIeibFSA8HDpe-4mV7pf62bpTAl9vzAXOzq5xrlwdPbUXB1hdq1y1DXFal90P9kdJ95WNHghHoMyHBiNZeLxej2p_fBe4QceT3yD4is0550jpVVKBTBEoCK83bq9OQJD7JseXpjY5YU-uXks",
+    img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
     icon:"map", iconColor:"#b6a0ff", tag:"行程规划", title:"规划东京之旅", sub:"7天科技与传统的深度体验", overlay:true },
   { key:"hotel", col:"md:col-span-2", row:"",
-    img:"https://lh3.googleusercontent.com/aida-public/AB6AXuBIcLLdIMz7WQ3ezvw32f7Nha-Pm3ednFMHdUmJQtyxyMAu9LmEcIZoejfGcE52-rWCuSi6xIOWQ4WlRwryw3CNoBinOtiAOdHBOz5stXQ4yXvxa5DIkv4PUFz8A0BUgb7paJUW9Kn5Gag1Ryd35ilwMHxGqSkmOFcDqCIxdz6gzLY3LxcR3gcyBZEoO4i8BAoc6lCikI5rVHbu-wfMkgg3YvQfC116cp4M-al1vcqVwVmAHgp0pqOHK5GXjiqht0LxFwv-tctf_Fw",
+    img:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80",
     icon:"hotel", iconColor:"#8596ff", tag:"住宿推荐", title:"精选酒店推荐", sub:null, overlay:false },
   { key:"transport", col:"", row:"",
     img:"https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&q=80",
@@ -34,7 +41,7 @@ const BENTO = [
 const CHIPS = ["瑞士阿尔卑斯7日游", "巴黎平价美食推荐", "8000元以内飞巴厘岛"];
 
 // ---- 侧边栏 ----
-const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId, username, createTime }) => {
+const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId, username, createTime, onViewChange }) => {
   const [active, setActive] = useState("new");
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -52,18 +59,18 @@ const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId,
     setActive(key);
     if (key === "new") { onNewChat(); setShowHistory(false); }
     else if (key === "history") { loadHistory(); setShowHistory(true); }
-    else { setShowHistory(false); }
+    else { setShowHistory(false); onViewChange(key); }
   };
 
   const navItems = [
     { icon:"add_circle", label:"新建行程",  key:"new" },
     { icon:"history",    label:"最近对话",  key:"history" },
-    { icon:"bookmark",   label:"收藏地点",  key:"saved" },
+    { icon:"bookmark",   label:"收藏地点",  key:"favorites" },
     { icon:"settings",   label:"旅行设置",  key:"settings" },
   ];
 
   return (
-    <aside style={{width:"260px",flexShrink:0,background:C.sidebar,backdropFilter:"blur(20px)",
+    <aside style={{width:"260px",flexShrink:0,background:"linear-gradient(180deg,rgba(20,12,40,0.96) 0%,rgba(8,6,20,0.96) 100%)",backdropFilter:"blur(20px)",
       borderRight:"1px solid rgba(255,255,255,0.05)",display:"flex",flexDirection:"column",
       height:"100vh",padding:"28px 16px",boxShadow:"0 0 50px -12px rgba(182,160,255,0.08)"}}>
 
@@ -133,8 +140,8 @@ const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId,
           </div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:"1px"}}>
-          {[["help_outline","帮助中心"],["logout","退出登录"]].map(([icon,label],i)=>(
-            <button key={icon} onClick={i===1?onLogout:undefined}
+          {[["help_outline","帮助中心","help"],["logout","退出登录","logout"]].map(([icon,label,key],i)=>(
+            <button key={icon} onClick={key==="logout" ? onLogout : ()=>onViewChange(key)}
               style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",borderRadius:"10px",
                 color:C.onSurfaceVariant,fontSize:"13px",background:"transparent",border:"none",cursor:"pointer",
                 fontFamily:"Manrope,sans-serif",transition:"all 0.15s"}}
@@ -154,7 +161,7 @@ const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId,
 const BentoCard = ({ item, onClick }) => (
   <div onClick={() => onClick(item.title)}
     className={`${item.col} ${item.row} group relative overflow-hidden rounded-xl cursor-pointer transition-all duration-500`}
-    style={{background:C.surfaceContainer,border:"1px solid rgba(255,255,255,0.05)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)"}}>
+    style={{background:C.surfaceContainer,border:"1px solid rgba(140,100,255,0.15)",boxShadow:"0 4px 24px rgba(80,40,160,0.2)"}}>
     {item.img && (
       <div className="absolute inset-0 z-0" style={{opacity:item.overlay?0.65:0.45}}>
         <img src={item.img} alt={item.title} className="w-full h-full object-cover"
@@ -190,7 +197,7 @@ const WelcomeView = ({ onSend }) => (
           让我来帮你规划
         </span>
       </h2>
-      <p style={{color:C.onSurfaceVariant,fontSize:"16px",lineHeight:"1.7"}}>你的专属 AI 旅行顾问，随时为你打造难忘的旅程。</p>
+      <p style={{color:"#c8c4e8",fontSize:"16px",lineHeight:"1.7"}}>你的专属 AI 旅行顾问，随时为你打造难忘的旅程。</p>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full" style={{maxWidth:"860px",height:"340px"}}>
       {BENTO.map(item => <BentoCard key={item.key} item={item} onClick={onSend} />)}
@@ -215,7 +222,7 @@ const MessageList = ({ messages, loading, endRef }) => (
           <div style={{maxWidth:"72%",padding:"11px 15px",
             borderRadius:msg.sender==="user"?"16px 4px 16px 16px":"4px 16px 16px 16px",
             fontSize:"14px",lineHeight:"1.75",wordBreak:"break-word",
-            background:msg.sender==="user"?"rgba(99,102,241,0.2)":C.surfaceContainer,
+            background:msg.sender==="user"?"rgba(120,80,255,0.25)":"rgba(18,14,32,0.9)",
             border:msg.sender==="user"?"1px solid rgba(129,140,248,0.25)":"1px solid rgba(255,255,255,0.05)",
             color:C.onSurface}}>
             <MsgContent text={msg.content} />
@@ -250,10 +257,14 @@ const Chat = ({ onLogout, token, username, createTime }) => {
   const [threadId, setThreadId] = useState(() => crypto.randomUUID());
   const [sessionTitle, setSessionTitle] = useState("");
   const [pendingApproval, setPendingApproval] = useState(false);
-  const [notifications, setNotifications] = useState([]); // 订单通知
+  const [notifications, setNotifications] = useState([]);
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [bookings, setBookings] = useState({ flights:[], hotels:[], cars:[] });
+  const [view, setView] = useState("chat"); // chat | destinations | itinerary | concierge | favorites | settings | help
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("tm_favorites") || "[]"); } catch { return []; }
+  });
   const endRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -354,6 +365,21 @@ const Chat = ({ onLogout, token, username, createTime }) => {
   const handleNewChat = () => {
     setMessages([]); setInput(""); setPendingApproval(false);
     setThreadId(crypto.randomUUID()); setSessionTitle("");
+    setView("chat");
+  };
+
+  const handleToggleFav = (id) => {
+    setFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+      localStorage.setItem("tm_favorites", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // 从其他视图发起对话，切换到 chat 视图
+  const handleChatFromView = (text) => {
+    setView("chat");
+    setTimeout(() => handleSend(text), 100);
   };
 
   // 加载历史会话
@@ -378,22 +404,30 @@ const Chat = ({ onLogout, token, username, createTime }) => {
   const isNew = messages.length === 0;
 
   return (
-    <div style={{display:"flex",height:"100vh",overflow:"hidden",background:C.surface}}>
+    <div style={{display:"flex",height:"100vh",overflow:"hidden",background:"linear-gradient(135deg,#0d0b1a 0%,#0d0d14 60%,#0a0d18 100%)"}}>
       <Sidebar onNewChat={handleNewChat} onLogout={onLogout} token={token}
         onSelectSession={handleSelectSession} currentThreadId={threadId}
-        username={username} createTime={createTime} />
+        username={username} createTime={createTime}
+        onViewChange={setView} />
 
       <main style={{flex:1,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
         <header style={{position:"fixed",top:0,right:0,left:"260px",zIndex:50,height:"64px",
           padding:"0 36px",display:"flex",justifyContent:"space-between",alignItems:"center",
-          background:C.header,backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+          background:"linear-gradient(90deg,rgba(16,10,36,0.88) 0%,rgba(8,6,20,0.88) 100%)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
           <div style={{display:"flex",alignItems:"center",gap:"24px"}}>
             <span className="headline-font" style={{fontSize:"16px",fontWeight:"700",color:C.onSurface}}>途灵 TripMind</span>
             <nav style={{display:"flex",gap:"18px"}}>
-              {["目的地","行程规划","礼宾服务"].map(t=>(
-                <a key={t} href="#" style={{color:C.onSurfaceVariant,fontSize:"13px",textDecoration:"none",transition:"color 0.2s"}}
-                  onMouseEnter={e=>e.target.style.color="#a5b4fc"}
-                  onMouseLeave={e=>e.target.style.color=C.onSurfaceVariant}>{t}</a>
+              {[["目的地","destinations"],["行程规划","itinerary"],["地图","worldmap"],["礼宾服务","concierge"]].map(([t,v])=>(
+                <button key={v} onClick={()=>setView(view===v?"chat":v)}
+                  style={{color: view===v ? "#a5b4fc" : C.onSurfaceVariant,fontSize:"13px",
+                    background:"none",border:"none",cursor:"pointer",transition:"color 0.2s",
+                    fontFamily:"Manrope,sans-serif",fontWeight: view===v ? "600" : "400",
+                    borderBottom: view===v ? "1px solid #a5b4fc" : "1px solid transparent",
+                    paddingBottom:"2px"}}
+                  onMouseEnter={e=>{ if(view!==v) e.target.style.color="#a5b4fc"; }}
+                  onMouseLeave={e=>{ if(view!==v) e.target.style.color=C.onSurfaceVariant; }}>
+                  {t}
+                </button>
               ))}
             </nav>
           </div>
@@ -501,8 +535,16 @@ const Chat = ({ onLogout, token, username, createTime }) => {
           </div>
         </header>
 
+        {/* 内容区 */}
         <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column"}}>
-          {isNew ? <WelcomeView onSend={handleSend} /> : <MessageList messages={messages} loading={loading} endRef={endRef} />}
+          {view === "destinations" && <DestinationsView onChat={handleChatFromView} favorites={favorites} onToggleFav={handleToggleFav} />}
+          {view === "itinerary"    && <ItineraryView onChat={handleChatFromView} />}
+          {view === "worldmap"     && <WorldMapView favorites={favorites} onToggleFav={handleToggleFav} onChat={handleChatFromView} />}
+          {view === "concierge"    && <ConciergeView onChat={handleChatFromView} />}
+          {view === "favorites"    && <FavoritesView onChat={handleChatFromView} favorites={favorites} onToggleFav={handleToggleFav} />}
+          {view === "settings"     && <SettingsView username={username} />}
+          {view === "help"         && <HelpView onChat={handleChatFromView} />}
+          {view === "chat" && (isNew ? <WelcomeView onSend={handleSend} /> : <MessageList messages={messages} loading={loading} endRef={endRef} />)}
         </div>
 
         {pendingApproval && (
@@ -524,11 +566,11 @@ const Chat = ({ onLogout, token, username, createTime }) => {
           </div>
         )}
 
-        <div style={{position:"fixed",bottom:0,right:0,left:"260px",padding:"16px 36px 20px",pointerEvents:"none",
+        {view === "chat" && <div style={{position:"fixed",bottom:0,right:0,left:"260px",padding:"16px 36px 20px",pointerEvents:"none",
           background:"linear-gradient(to top, #0e0e13 60%, transparent 100%)",zIndex:30}}>
           <div style={{maxWidth:"780px",margin:"0 auto",pointerEvents:"auto"}}>
             <div style={{display:"flex",alignItems:"flex-end",borderRadius:"9999px",padding:"6px 6px 6px 20px",
-              background:"#1a1a22",backdropFilter:"blur(24px)",
+              background:"rgba(18,12,38,0.85)",backdropFilter:"blur(24px)",
               border:"1px solid rgba(255,255,255,0.1)",boxShadow:"0 0 0 1px rgba(182,160,255,0.08), 0 8px 32px rgba(0,0,0,0.6)"}}>
               <textarea ref={textareaRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder="告诉我你想去哪里旅行..."
@@ -555,7 +597,7 @@ const Chat = ({ onLogout, token, username, createTime }) => {
               {CHIPS.map(chip=>(
                 <button key={chip} onClick={()=>handleSend(chip)}
                   style={{padding:"6px 14px",borderRadius:"9999px",fontSize:"12px",fontWeight:"500",
-                    background:"rgba(41,60,160,0.35)",border:"1px solid rgba(255,255,255,0.06)",
+                    background:"rgba(80,40,180,0.3)",border:"1px solid rgba(255,255,255,0.06)",
                     color:C.secondary,cursor:"pointer",transition:"background 0.2s",fontFamily:"Manrope,sans-serif"}}
                   onMouseEnter={e=>e.currentTarget.style.background="rgba(41,60,160,0.55)"}
                   onMouseLeave={e=>e.currentTarget.style.background="rgba(41,60,160,0.35)"}>
@@ -564,10 +606,13 @@ const Chat = ({ onLogout, token, username, createTime }) => {
               ))}
             </div>
           </div>
-        </div>
+        </div>}
       </main>
     </div>
   );
 };
 
 export default Chat;
+
+
+
