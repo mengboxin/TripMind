@@ -35,10 +35,13 @@ def get_by_id(pk: int, session: Session = Depends(get_db)):
 @router.post('/register/', description='创建用户', summary='用户注册', response_model=UserSchema)
 def create(obj_in: CreateOrUpdateUserSchema, session: Session = Depends(get_db)):
     if not obj_in.password:
-        obj_in.password = str(settings.DEFAULT_PASSWORD)  # 添加用户时：给所有用户一个默认的密码
-
-    # 把密码变成hash之后的密文
+        obj_in.password = str(settings.DEFAULT_PASSWORD)
     obj_in.password = get_hashed_password(obj_in.password)
+
+    # 新用户自动生成唯一的 passenger_id（格式：4位数字 + 空格 + 6位数字，与数据库格式一致）
+    if not obj_in.passenger_id:
+        import random
+        obj_in.passenger_id = f"{random.randint(1000,9999)} {random.randint(100000,999999)}"
 
     return _dao.create(session, obj_in)
 
@@ -67,6 +70,7 @@ def login(obj_in: UserLoginSchema, session: Session = Depends(get_db)):
         'real_name': user.real_name,
         'token': create_token(str(user.id) + ':' + user.username),
         'create_time': user.create_time.isoformat() if user.create_time else None,
+        'passenger_id': user.passenger_id or '',
     }
 
 

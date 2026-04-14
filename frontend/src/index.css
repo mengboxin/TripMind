@@ -71,3 +71,9 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
   50%  { transform: scale(1.15) translateX(-1%); }
   100% { transform: scale(1.08) translateX(1%); }
 }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,110,132,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(255,110,132,0); }
+}
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

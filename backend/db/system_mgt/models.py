@@ -12,6 +12,7 @@ class UserModel(DBModelBase):
     password: Mapped[str] = mapped_column(String(200), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=True, comment='用户的手机号码')
     email: Mapped[str] = mapped_column(String(50), nullable=True, comment='用户的邮箱地址')
+    passenger_id: Mapped[str] = mapped_column(String(20), nullable=True, comment='关联的旅客ID')
     real_name: Mapped[str] = mapped_column(String(50), nullable=True, comment='用户的真实名字')
     icon: Mapped[str] = mapped_column(String(100), default='/static/user_icon/default.jpg', nullable=True,
                                       comment='用户的展示头像')

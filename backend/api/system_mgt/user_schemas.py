@@ -26,6 +26,7 @@ class CreateOrUpdateUserSchema(BaseUserSchema):
     """创建或者修改用户的Schema"""
     password: str = Field(description='密码', default=None)
     roles: List[int] = Field(description='用户所选的角色ID列表', default=None)
+    passenger_id: str = Field(description='旅客ID', default=None)
 
 
 class UserSchema(BaseUserSchema, InDBMixin):

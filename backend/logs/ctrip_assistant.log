@@ -32,3 +32,36 @@
 20260406 08:12:15 - SpawnProcess-1 | ThreadPoolExecutor-2_0 | log_utils.info:66 - INFO -搜索完成，找到 10 家酒店
 20260406 08:15:02 - SpawnProcess-1 | ThreadPoolExecutor-5_0 | log_utils.info:66 - INFO -尝试预订酒店 ID: 8
 20260406 08:15:02 - SpawnProcess-1 | ThreadPoolExecutor-5_0 | log_utils.success:81 - SUCCESS -Hotel 8 成功预定。
+20260414 11:56:14 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -开始执行数据库日期重置任务...
+20260414 11:56:14 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -已连接到数据库: ctrip_assistant
+20260414 11:56:14 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -检测到数据表: ['aircrafts_data', 'airports_data', 'boarding_passes', 'bookings', 'car_rentals', 'flights', 'hotels', 'seats', 't_budget_records', 't_chat_history', 't_lg_checkpoint_writes', 't_lg_checkpoints', 't_travel_budget', 't_usermodel', 't_vector_cache', 'ticket_flights', 'tickets', 'trip_recommendations']
+20260414 11:56:31 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -所有表数据读取完成。
+20260414 11:56:31 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -计算出的时间偏移量: 47 days 21:04:10.474791 (基准时间: 2026-02-25 14:52:21)
+20260414 11:56:32 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -开始回写数据到数据库...
+20260414 11:56:32 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -表 aircrafts_data 更新完毕 (Rows: 9)
+20260414 11:56:32 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -表 airports_data 更新完毕 (Rows: 115)
+20260414 11:56:42 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -表 boarding_passes 更新完毕 (Rows: 579686)
+20260414 11:56:47 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -表 bookings 更新完毕 (Rows: 262791)
+20260414 11:56:47 - SpawnProcess-2 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -表 car_rentals 更新完毕 (Rows: 10)
+20260414 11:57:07 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -开始执行数据库日期重置任务...
+20260414 11:57:07 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -已连接到数据库: ctrip_assistant
+20260414 11:57:07 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -检测到数据表: ['aircrafts_data', 'airports_data', 'boarding_passes', 'bookings', 'car_rentals', 'hotels', 'seats', 't_budget_records', 't_chat_history', 't_lg_checkpoint_writes', 't_lg_checkpoints', 't_travel_budget', 't_usermodel', 't_vector_cache', 'ticket_flights', 'tickets', 'trip_recommendations']
+20260414 11:57:29 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -所有表数据读取完成。
+20260414 11:57:29 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:59 - ERROR -flights 表缺失或为空，无法计算时间偏移。
+20260414 12:48:28 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -开始执行数据库日期更新任务...
+20260414 12:48:28 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -时间偏移量: 683 天（基准时间: 2024-05-30 15:04:04）
+20260414 12:48:29 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -flights.scheduled_departure 更新完成，影响 33121 行
+20260414 12:48:29 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -flights.scheduled_arrival 更新完成，影响 33121 行
+20260414 12:48:29 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -flights.actual_departure 更新完成，影响 16773 行
+20260414 12:48:29 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -flights.actual_arrival 更新完成，影响 16715 行
+20260414 12:48:32 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -bookings.book_date 更新完成，影响 262791 行
+20260414 12:48:32 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -SUCCESS: 数据库日期已成功更新。
+20260414 13:25:52 - SpawnProcess-3 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 13:25:52 - SpawnProcess-3 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 13:30:51 - SpawnProcess-4 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 14:34:33 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 14:34:33 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 14:51:09 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 14:51:10 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 15:17:11 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260414 15:17:11 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功

@@ -12,6 +12,23 @@ from utils.docs_oauth2 import MyOAuth2PasswordBearer
 # static 目录在项目根目录（backend 的上一级）
 STATIC_DIR = Path(__file__).parent.parent / "static"
 
+# 记录上次更新时间的文件
+_LAST_UPDATE_FILE = Path(__file__).parent / ".last_db_update"
+
+
+def _should_update_db() -> bool:
+    """判断是否需要更新数据库时间（超过7天则更新）"""
+    import time
+    if not _LAST_UPDATE_FILE.exists():
+        return True
+    last = float(_LAST_UPDATE_FILE.read_text().strip())
+    return (time.time() - last) > 7 * 24 * 3600
+
+
+def _mark_updated():
+    import time
+    _LAST_UPDATE_FILE.write_text(str(time.time()))
+
 
 def create_app() -> FastAPI:
     init_log()
@@ -23,6 +40,23 @@ def create_app() -> FastAPI:
     middlewares.init_middleware(_app)
     cors.init_cors(_app)
     routers.init_routers(_app)
+
+    # 启动时检查是否需要更新数据库时间
+    @_app.on_event("startup")
+    async def on_startup():
+        if _should_update_db():
+            import threading
+            def run_update():
+                try:
+                    from tools.init_db import update_dates
+                    update_dates()
+                    _mark_updated()  # 只有成功才记录时间
+                except Exception as e:
+                    import logging
+                    logging.getLogger("main").error(f"数据库时间更新失败: {e}")
+            # 在后台线程执行，不阻塞启动
+            threading.Thread(target=run_update, daemon=True).start()
+
     return _app
 
 
