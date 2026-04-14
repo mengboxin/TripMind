@@ -56,8 +56,8 @@ function App() {
       onRefreshPreload={refreshPreload}
     />
   );
-  if (page === "register") return <Register onRegister={handleLogin} onSwitchToLogin={() => setPage("login")} />;
-  return <Login onLogin={handleLogin} onSwitchToRegister={() => setPage("register")} />;
+  if (page === "register") return <><div className="noise-overlay"/><Register onRegister={handleLogin} onSwitchToLogin={() => setPage("login")} /></>;
+  return <><div className="noise-overlay"/><Login onLogin={handleLogin} onSwitchToRegister={() => setPage("register")} /></>;
 }
 
 export default App;

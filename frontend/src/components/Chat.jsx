@@ -76,9 +76,13 @@ const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId,
   ];
 
   return (
-    <aside style={{width:"260px",flexShrink:0,background:"linear-gradient(180deg,rgba(20,12,40,0.96) 0%,rgba(8,6,20,0.96) 100%)",backdropFilter:"blur(20px)",
-      borderRight:"1px solid rgba(255,255,255,0.05)",display:"flex",flexDirection:"column",
-      height:"100vh",padding:"28px 16px",boxShadow:"0 0 50px -12px rgba(182,160,255,0.08)"}}>
+    <aside style={{width:"260px",flexShrink:0,
+      background:"linear-gradient(180deg,rgba(18,10,42,0.97) 0%,rgba(10,8,24,0.97) 100%)",
+      backdropFilter:"blur(24px)",
+      borderRight:"1px solid rgba(140,100,255,0.12)",
+      display:"flex",flexDirection:"column",
+      height:"100vh",padding:"28px 16px",
+      boxShadow:"4px 0 40px rgba(100,60,255,0.08), inset -1px 0 0 rgba(255,255,255,0.03)"}}>
 
       <div style={{marginBottom:"32px",paddingLeft:"8px",cursor:"pointer"}} onClick={() => handleNav("new")}>
         <h1 className="headline-font"
@@ -179,49 +183,138 @@ const Sidebar = ({ onNewChat, onLogout, token, onSelectSession, currentThreadId,
 const BentoCard = ({ item, onClick }) => (
   <div onClick={() => onClick(item.title)}
     className={`${item.col} ${item.row} group relative overflow-hidden rounded-xl cursor-pointer transition-all duration-500`}
-    style={{background:C.surfaceContainer,border:"1px solid rgba(140,100,255,0.15)",boxShadow:"0 4px 24px rgba(80,40,160,0.2)"}}>
+    style={{background:C.surfaceContainer,border:"1px solid rgba(140,100,255,0.2)",
+      boxShadow:"0 4px 24px rgba(80,40,160,0.25)",transition:"transform 0.2s,box-shadow 0.2s"}}
+    onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 32px rgba(120,80,255,0.35)";}}
+    onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 4px 24px rgba(80,40,160,0.25)";}}>
     {item.img && (
-      <div className="absolute inset-0 z-0" style={{opacity:item.overlay?0.65:0.45}}>
+      <div className="absolute inset-0 z-0" style={{opacity:item.overlay ? 0.75 : 0.72}}>
         <img src={item.img} alt={item.title} className="w-full h-full object-cover"
           onError={e=>e.target.style.display="none"} />
       </div>
     )}
-    {item.overlay && <div className="absolute inset-0 z-10" style={{background:"linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 60%)"}} />}
-    {!item.overlay && item.img && <div className="absolute inset-0 z-10" style={{background:"rgba(0,0,0,0.45)"}} />}
+    {item.overlay && <div className="absolute inset-0 z-10" style={{background:"linear-gradient(to top,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.1) 60%)"}} />}
+    {!item.overlay && item.img && <div className="absolute inset-0 z-10" style={{background:"linear-gradient(135deg,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.18) 100%)"}} />}
     <div className={`relative z-20 p-5 flex flex-col ${item.overlay?"absolute bottom-0 left-0 right-0":"h-full justify-between"}`}>
       {item.tag ? (
-        <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"8px"}}>
-          <span className="material-symbols-outlined" style={{color:item.iconColor,fontSize:"14px"}}>{item.icon}</span>
-          <span className="headline-font" style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.1em",color:item.iconColor}}>{item.tag}</span>
+        <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"8px",
+          background:"rgba(0,0,0,0.35)",backdropFilter:"blur(6px)",
+          padding:"4px 10px",borderRadius:"9999px",width:"fit-content",
+          border:`1px solid ${item.iconColor}40`}}>
+          <span className="material-symbols-outlined" style={{color:item.iconColor,fontSize:"13px",fontVariationSettings:"'FILL' 1"}}>{item.icon}</span>
+          <span className="headline-font" style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.08em",color:item.iconColor}}>{item.tag}</span>
         </div>
       ) : (
         <span className="material-symbols-outlined" style={{color:item.iconColor,fontSize:"26px"}}>{item.icon}</span>
       )}
       <div>
-        <h3 className="headline-font" style={{color:"white",fontSize:item.overlay?"19px":"14px",fontWeight:"700",marginBottom:item.sub?"4px":"0"}}>{item.title}</h3>
-        {item.sub && <p style={{fontSize:"12px",color:item.overlay?"#d1d5db":C.onSurfaceVariant}}>{item.sub}</p>}
+        <h3 className="headline-font" style={{color:"white",fontSize:item.overlay?"19px":"15px",fontWeight:"700",marginBottom:item.sub?"4px":"0",
+          textShadow:"0 1px 8px rgba(0,0,0,0.6)"}}>{item.title}</h3>
+        {item.sub && <p style={{fontSize:"12px",color:item.overlay?"#e5e7eb":"#f0eeff",textShadow:"0 1px 4px rgba(0,0,0,0.5)"}}>{item.sub}</p>}
       </div>
     </div>
   </div>
 );
 
 // ---- 欢迎页 ----
-const WelcomeView = ({ onSend }) => (
+const WelcomeView = ({ onSend }) => {
+  const planeRef = React.useRef(null);
+  const canvasRef = React.useRef(null);
+  const frameRef = React.useRef(null);
+  const trailRef = React.useRef([]); // 存储尾迹点
+
+  React.useEffect(() => {
+    let angle = 0;
+    const rx = 280, ry = 68;
+    const speed = 0.4;
+    const TRAIL_LEN = 48; // 尾迹点数量
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    // canvas 中心对应椭圆中心
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const tick = () => {
+      angle = (angle + speed) % 360;
+      const rad = (angle * Math.PI) / 180;
+      const x = rx * Math.cos(rad);
+      const y = ry * Math.sin(rad);
+      const dx = -rx * Math.sin(rad);
+      const dy = ry * Math.cos(rad);
+      const rot = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      // 更新飞机位置
+      if (planeRef.current) {
+        planeRef.current.style.transform =
+          `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${rot}deg)`;
+      }
+
+      // 记录尾迹点（canvas 坐标）
+      trailRef.current.push({ x: cx + x, y: cy + y });
+      if (trailRef.current.length > TRAIL_LEN) trailRef.current.shift();
+
+      // 绘制尾迹
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const trail = trailRef.current;
+      for (let i = 1; i < trail.length; i++) {
+        const alpha = (i / trail.length) * 0.55;
+        const width = (i / trail.length) * 2.2;
+        ctx.beginPath();
+        ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+        ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.strokeStyle = `rgba(180,160,255,${alpha})`;
+        ctx.lineWidth = width;
+        ctx.lineCap = "round";
+        ctx.stroke();
+      }
+
+      frameRef.current = requestAnimationFrame(tick);
+    };
+    frameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  return (
   <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"80px 48px 200px"}}>
-    <div style={{textAlign:"center",marginBottom:"48px",maxWidth:"680px"}}>
-      <h2 className="headline-font" style={{fontSize:"clamp(30px,4vw,52px)",fontWeight:"800",color:C.onSurface,lineHeight:"1.15",marginBottom:"14px"}}>
+    <div style={{textAlign:"center",marginBottom:"48px",maxWidth:"680px",position:"relative"}}>
+      {/* 尾迹 canvas */}
+      <canvas ref={canvasRef} width={680} height={200}
+        style={{position:"absolute",top:"44%",left:"50%",
+          transform:"translate(-50%,-50%)",
+          pointerEvents:"none",zIndex:1,opacity:0.9}} />
+      {/* 绕轨道的小飞机 */}
+      <div ref={planeRef} style={{
+        position:"absolute",top:"44%",left:"50%",
+        fontSize:"20px",
+        filter:"drop-shadow(0 0 4px rgba(180,160,255,0.4))",
+        pointerEvents:"none",
+        zIndex:2,
+        transformOrigin:"center",
+      }}>✈️</div>
+
+      <h2 className="headline-font glow-title" style={{
+        fontSize:"clamp(30px,4vw,52px)",fontWeight:"800",
+        color:C.onSurface,lineHeight:"1.15",marginBottom:"14px",
+        position:"relative",zIndex:3,
+      }}>
         你想去哪里旅行？<br/>
-        <span style={{background:"linear-gradient(to right,#b6a0ff,#8596ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+        <span style={{
+          background:"linear-gradient(to right,#c4b0ff,#a0b4ff,#b6a0ff)",
+          WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+          display:"inline-block",
+        }}>
           让我来帮你规划
         </span>
       </h2>
-      <p style={{color:"#c8c4e8",fontSize:"16px",lineHeight:"1.7"}}>你的专属 AI 旅行顾问，随时为你打造难忘的旅程。</p>
+      <p style={{color:"#c8c4e8",fontSize:"16px",lineHeight:"1.7",position:"relative",zIndex:3}}>你的专属 AI 旅行顾问，随时为你打造难忘的旅程。</p>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full" style={{maxWidth:"860px",height:"340px"}}>
       {BENTO.map(item => <BentoCard key={item.key} item={item} onClick={onSend} />)}
     </div>
   </div>
-);
+  );
+};
 
 // ---- 消息列表 ----
 const MsgContent = ({ text, isAi }) => {
@@ -512,7 +605,8 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
   const isNew = messages.length === 0;
 
   return (
-    <div style={{display:"flex",height:"100vh",overflow:"hidden",background:"linear-gradient(135deg,#0d0b1a 0%,#0d0d14 60%,#0a0d18 100%)"}}>
+    <div style={{display:"flex",height:"100vh",overflow:"hidden",background:"#0b0a18"}}>
+      <div className="noise-overlay" style={{zIndex:0}}/>
       <Sidebar onNewChat={handleNewChat} onLogout={onLogout} token={token}
         onSelectSession={handleSelectSession} currentThreadId={threadId}
         username={username} createTime={createTime}
@@ -521,8 +615,24 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
       <main style={{flex:1,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
         <header style={{position:"fixed",top:0,right:0,left:"260px",zIndex:50,height:"64px",
           padding:"0 36px",display:"flex",justifyContent:"space-between",alignItems:"center",
-          background:"linear-gradient(90deg,rgba(16,10,36,0.88) 0%,rgba(8,6,20,0.88) 100%)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"28px"}}>
+          background:"linear-gradient(90deg,rgba(22,12,48,0.92) 0%,rgba(14,10,36,0.92) 50%,rgba(10,14,40,0.92) 100%)",
+          backdropFilter:"blur(24px)",
+          borderBottom:"1px solid rgba(120,100,255,0.15)",
+          boxShadow:"0 1px 0 rgba(100,80,255,0.08), 0 4px 24px rgba(80,60,200,0.12), inset 0 1px 0 rgba(160,140,255,0.06)"
+        }}>
+          {/* header 蓝紫装饰光 */}
+          <div style={{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden",zIndex:0}}>
+            <div style={{position:"absolute",top:"-20px",left:"15%",width:"220px",height:"80px",
+              background:"radial-gradient(ellipse,rgba(120,100,255,0.12) 0%,transparent 70%)",
+              filter:"blur(12px)"}}/>
+            <div style={{position:"absolute",top:"-10px",left:"45%",width:"160px",height:"60px",
+              background:"radial-gradient(ellipse,rgba(80,120,255,0.09) 0%,transparent 70%)",
+              filter:"blur(10px)"}}/>
+            <div style={{position:"absolute",top:"-15px",right:"12%",width:"180px",height:"70px",
+              background:"radial-gradient(ellipse,rgba(160,100,255,0.10) 0%,transparent 70%)",
+              filter:"blur(12px)"}}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"28px",position:"relative",zIndex:1}}>
             <span className="headline-font" onClick={handleNewChat}
               style={{fontSize:"16px",fontWeight:"700",color:C.onSurface,cursor:"pointer",
                 background:"linear-gradient(to right,#a5b4fc,#c084fc)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
@@ -554,7 +664,7 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
               ))}
             </nav>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:"18px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"18px",position:"relative",zIndex:1}}>
             {/* 对话视图有消息时显示导出按钮 */}
             {view === "chat" && messages.length > 0 && (
               <ExportButton messages={messages} username={username} />

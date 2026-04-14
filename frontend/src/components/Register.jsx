@@ -8,8 +8,8 @@ const C = {
 };
 
 const FieldIcon = ({ icon, children }) => (
-  <div className="relative flex items-center rounded-xl"
-    style={{border:"1px solid rgba(182,160,255,0.2)",background:"rgba(255,255,255,0.07)"}}>
+  <div className="relative flex items-center rounded-full"
+    style={{border:"1px solid rgba(182,160,255,0.2)",background:"rgba(255,255,255,0.07)",overflow:"hidden"}}>
     <span className="material-symbols-outlined absolute left-4 select-none"
       style={{color:"rgba(182,160,255,0.7)",fontSize:"20px"}}>{icon}</span>
     {children}

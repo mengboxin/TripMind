@@ -36,10 +36,26 @@
 
 body {
   font-family: 'Manrope', sans-serif;
-  background-color: #0e0e13;
+  background: #0b0a18;
   color: #f6f2fa;
   min-height: 100vh;
 }
+
+/* 全局 aurora 背景光晕 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(120,80,255,0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(80,120,255,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 85%, rgba(160,80,220,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 35% at 20% 80%, rgba(60,100,255,0.08) 0%, transparent 50%);
+}
+
+#root { position: relative; z-index: 1; }
 
 h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
 .headline-font { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -77,3 +93,69 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
 }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 标题光晕呼吸动画 */
+@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(160,130,255,0.12), 0 0 40px rgba(120,100,255,0.08); }
+  50%       { text-shadow: 0 0 30px rgba(180,150,255,0.20), 0 0 60px rgba(140,120,255,0.12); }
+}
+.glow-title { animation: glowPulse 5s ease-in-out infinite; }
+
+/* 小飞机绕椭圆轨道 */
+@keyframes orbit {
+  0%   { transform: rotate(0deg)   translateX(260px) rotate(0deg); }
+  25%  { transform: rotate(90deg)  translateX(260px) rotate(-90deg); }
+  50%  { transform: rotate(180deg) translateX(260px) rotate(-180deg); }
+  75%  { transform: rotate(270deg) translateX(260px) rotate(-270deg); }
+  100% { transform: rotate(360deg) translateX(260px) rotate(-360deg); }
+}
+.orbit-wrapper {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  animation: orbit 8s linear infinite;
+}
+.orbit-icon {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  filter: drop-shadow(0 0 6px rgba(180,160,255,0.5));
+}
+
+/* Aurora 光晕漂移 */
+@keyframes aurora1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(3%, 2%) scale(1.05); }
+  66%       { transform: translate(-2%, 3%) scale(0.97); }
+}
+@keyframes aurora2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-4%, -2%) scale(1.08); }
+  70%       { transform: translate(2%, -3%) scale(0.95); }
+}
+
+body::before { animation: aurora1 18s ease-in-out infinite; }
+
+/* 第二层光晕 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 35% at 50% 50%, rgba(100,60,200,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 25% at 70% 40%, rgba(80,160,255,0.07) 0%, transparent 50%);
+  animation: aurora2 24s ease-in-out infinite;
+}
+
+/* 噪点纹理增加质感 */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
