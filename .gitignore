@@ -20,6 +20,10 @@ env/
 *.db
 *.sqlite3
 
+# 大型 SQL 数据文件
+backend/travel2.sql
+backend/travel22.sql
+
 # 配置文件（含敏感信息）
 backend/config/production.yml
 
