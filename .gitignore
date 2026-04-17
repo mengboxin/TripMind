@@ -20,6 +20,9 @@ env/
 *.db
 *.sqlite3
 
+# 配置文件（含敏感信息）
+backend/config/production.yml
+
 # 日志
 logs/
 *.log
