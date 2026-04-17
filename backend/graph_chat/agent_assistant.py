@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from langchain_core.prompts import ChatPromptTemplate
 
 from graph_chat.base_data_model import CompleteOrEscalate

@@ -1,4 +1,4 @@
-﻿import uvicorn
+import uvicorn
 from pathlib import Path
 from fastapi import FastAPI, Depends
 from starlette.staticfiles import StaticFiles

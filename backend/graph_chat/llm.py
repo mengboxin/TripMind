@@ -4,7 +4,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from pydantic import BaseModel, Field
-from langchain_community.chat_models.tongyi import ChatTongyi
 import os
 from dotenv import load_dotenv
 
@@ -16,11 +15,11 @@ load_dotenv()
 
 # 当前使用的主模型配置 - 基于你的.env文件
 MODEL_CONFIG = {
-    "provider": "tongyi",  # 可选: "tongyi", "openai", "zhipu"
-    "model_name": "qwen-max",
+    "provider": "openai",
+    "model_name": "qwen3-max",
     "temperature": 0.7,
-    "api_key_env": "DASHSCOPE_API_KEY",
-    "base_url_env": "DASHSCOPE_BASE_URL",  # 使用环境变量中的URL
+    "api_key_env": "OPENAI_API_KEY",
+    "base_url_env": "OPENAI_BASE_URL",
 }
 
 
@@ -47,16 +46,13 @@ def create_model(config=None):
     base_url = os.getenv(base_url_env) if base_url_env else None
 
     if provider == "tongyi":
-        # 通义千问模型 - 使用你的配置
-        kwargs = {
-            "model": model_name,
-            "api_key": api_key,
-            "temperature": temperature
-        }
-        if base_url:
-            kwargs["base_url"] = base_url
-
-        return ChatTongyi(**kwargs)
+        # 通义千问 - 使用 OpenAI 兼容接口，避免 ChatTongyi 的 pydantic 兼容性问题
+        return ChatOpenAI(
+            model=model_name,
+            api_key=api_key,
+            temperature=temperature,
+            base_url=base_url or "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        )
 
     elif provider == "openai":
         # OpenAI模型 - 使用你的代理配置

@@ -131,7 +131,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
               </div>
               <FieldIcon icon="lock">
                 <input id="password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required
-                  placeholder="••••••••" className="w-full focus:outline-none"
+                  placeholder="请输入密码" className="w-full focus:outline-none"
                   style={{background:"transparent",padding:"13px 13px 13px 46px",color:"white",fontSize:"14px",fontFamily:"Manrope,sans-serif"}}/>
               </FieldIcon>
             </div>

@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 from starlette.requests import Request
 from pydantic import BaseModel
 from typing import Optional

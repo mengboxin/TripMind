@@ -1,0 +1,25 @@
+﻿LOG_LEVEL: WARNING
+HOST: 0.0.0.0
+PORT: 8000
+
+# 生产环境允许的前端域名，部署后改成你的实际域名
+ORIGINS: ['https://your-domain.com', 'http://your-server-ip']
+
+DATABASE:
+  DRIVER: mysql+pymysql
+  NAME: ctrip_assistant
+  HOST: 127.0.0.1        # 数据库与后端同机则保持，否则改为数据库服务器IP
+  PORT: 3306
+  USERNAME: root
+  PASSWORD: your_db_password   # 改为实际密码
+  QUERY:
+    charset: utf8mb4
+
+# 生产环境务必换一个随机长字符串，不要用开发环境的
+JWT_SECRET_KEY: "change-this-to-a-long-random-secret-in-production"
+ALGORITHM: HS256
+ACCESS_TOKEN_EXPIRE_MINUTES: 43200   # 生产环境 token 30天有效
+
+WHITE_LIST: ['/api/login', '/api/register', '/static', '/docs', '/swagger', '/openapi', '/api/auth', '/api/weather']
+
+DEFAULT_PASSWORD: "change-this-default-password"

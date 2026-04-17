@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
-import { geoNaturalEarth1, geoPath } from "d3-geo";
-import { feature } from "topojson-client";
+
+const TIANDITU_KEY = "52184641e399c73302c41d5940b891e4";
 
 const ALL_DESTINATIONS = [
   { id:"beijing",  name:"北京",    country:"中国",     region:"亚洲",   coords:[116.40,39.90], color:"#c084fc" },
@@ -24,24 +24,71 @@ const ALL_DESTINATIONS = [
   { id:"capetown", name:"开普敦",  country:"南非",     region:"非洲",   coords:[18.42,-33.93], color:"#f87171" },
 ];
 
-const W = 900, H = 460;
-
 const FootprintView = () => {
-  const [paths, setPaths] = useState([]);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const [mapReady, setMapReady] = useState(false);
   const [visited, setVisited] = useState(() => {
     try { return JSON.parse(localStorage.getItem("tm_visited") || "[]"); } catch { return []; }
   });
   const [selected, setSelected] = useState(null);
 
-  const projection = geoNaturalEarth1().scale(145).translate([W/2, H/2]);
-  const pg = geoPath().projection(projection);
-
+  // 加载天地图
   useEffect(() => {
-    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
-      .then(r => r.json())
-      .then(topo => setPaths(feature(topo, topo.objects.countries).features))
-      .catch(() => {});
+    if (window.T) { setMapReady(true); return; }
+    const script = document.createElement("script");
+    script.src = `https://api.tianditu.gov.cn/api?v=4.0&tk=${TIANDITU_KEY}`;
+    script.onload = () => setMapReady(true);
+    document.head.appendChild(script);
   }, []);
+
+  // 初始化地图
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || mapInstanceRef.current) return;
+    const T = window.T;
+    const map = new T.Map(mapRef.current);
+    map.centerAndZoom(new T.LngLat(20, 20), 2);
+    map.enableScrollWheelZoom();
+    const tileLayer = new T.TileLayer(
+      `https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`,
+      { minZoom: 1, maxZoom: 18, subdomains: "01234567" }
+    );
+    const labelLayer = new T.TileLayer(
+      `https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`,
+      { minZoom: 1, maxZoom: 18, subdomains: "01234567" }
+    );
+    map.addLayer(tileLayer);
+    map.addLayer(labelLayer);
+    mapInstanceRef.current = map;
+  }, [mapReady]);
+
+  // 更新标记
+  useEffect(() => {
+    if (!mapInstanceRef.current || !mapReady) return;
+    const T = window.T;
+    const map = mapInstanceRef.current;
+    markersRef.current.forEach(m => map.removeOverLay(m));
+    markersRef.current = [];
+
+    ALL_DESTINATIONS.forEach(dest => {
+      const isVisited = visited.includes(dest.id);
+      const isSel = selected?.id === dest.id;
+      const size = isSel ? 28 : isVisited ? 22 : 14;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="${isVisited ? dest.color+'30' : '#2a205080'}" stroke="${isVisited ? dest.color : '#4a3880'}" stroke-width="${isSel?2.5:1.5}"/>
+        <circle cx="12" cy="12" r="${isSel?5:isVisited?4:2.5}" fill="${isVisited ? dest.color : '#4a3880'}"/>
+        ${isVisited ? `<text x="12" y="8" text-anchor="middle" font-size="7" fill="${dest.color}">✓</text>` : ''}
+      </svg>`;
+      const blob = new Blob([svg], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const icon = new T.Icon({ iconUrl: url, iconSize: new T.Point(size, size), iconAnchor: new T.Point(size/2, size/2) });
+      const marker = new T.Marker(new T.LngLat(dest.coords[0], dest.coords[1]), { icon });
+      marker.addEventListener("click", () => setSelected(s => s?.id === dest.id ? null : dest));
+      map.addOverLay(marker);
+      markersRef.current.push(marker);
+    });
+  }, [mapReady, visited, selected]);
 
   const toggleVisited = (id) => {
     const next = visited.includes(id) ? visited.filter(v => v !== id) : [...visited, id];
@@ -55,19 +102,16 @@ const FootprintView = () => {
   return (
     <div style={{flex:1,overflowY:"auto",paddingTop:"80px",paddingBottom:"40px"}}>
       <div style={{maxWidth:"1000px",margin:"0 auto",padding:"24px 32px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:"20px",flexWrap:"wrap",gap:"12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:"16px",flexWrap:"wrap",gap:"12px"}}>
           <div>
-            <h2 className="headline-font" style={{fontSize:"24px",fontWeight:"700",marginBottom:"6px",
+            <h2 className="headline-font" style={{fontSize:"24px",fontWeight:"700",marginBottom:"4px",
               background:"linear-gradient(to right,#f472b6,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
               旅行足迹
             </h2>
-            <p style={{fontSize:"13px",color:"#b8b5cc"}}>
-              已打卡 <span style={{color:"#f472b6",fontWeight:"700"}}>{visited.length}</span> 个目的地 ·
-              覆盖 <span style={{color:"#a78bfa",fontWeight:"700"}}>{new Set(visitedDests.map(d=>d.country)).size}</span> 个国家 ·
-              <span style={{color:"#60a5fa",fontWeight:"700"}}> {regions.length}</span> 个大洲
+            <p style={{fontSize:"12px",color:"#6b7280"}}>
+              地图来源：国家地理信息公共服务平台天地图 · 审图号：GS(2024)0650号
             </p>
           </div>
-          {/* 统计徽章 */}
           <div style={{display:"flex",gap:"10px"}}>
             {[
               { label:"目的地", value:visited.length, color:"#f472b6" },
@@ -83,55 +127,28 @@ const FootprintView = () => {
           </div>
         </div>
 
-        {/* 足迹地图 */}
-        <div style={{borderRadius:"20px",overflow:"hidden",border:"1px solid rgba(244,114,182,0.2)",
-          background:"radial-gradient(ellipse at center,#0f0c24 0%,#080614 100%)",
-          boxShadow:"0 0 40px rgba(244,114,182,0.08)",marginBottom:"24px"}}>
-          <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",display:"block"}}>
-            {paths.map((geo, i) => (
-              <path key={i} d={pg(geo)||""} fill="#13102a" stroke="#2d2060" strokeWidth={0.4}
-                onMouseEnter={e=>e.target.setAttribute("fill","#1e1640")}
-                onMouseLeave={e=>e.target.setAttribute("fill","#13102a")} />
-            ))}
-            {/* 已访问目的地 */}
-            {ALL_DESTINATIONS.map(dest => {
-              const pt = projection(dest.coords);
-              if (!pt) return null;
-              const isVisited = visited.includes(dest.id);
-              const isSel = selected?.id === dest.id;
-              return (
-                <g key={dest.id} style={{cursor:"pointer"}} onClick={() => setSelected(isSel ? null : dest)}>
-                  {isVisited && <circle cx={pt[0]} cy={pt[1]} r={18} fill={`${dest.color}10`} stroke={dest.color} strokeWidth={0.5} opacity={0.5}/>}
-                  <circle cx={pt[0]} cy={pt[1]} r={isVisited ? (isSel?8:5) : 3}
-                    fill={isVisited ? dest.color : "#2a2050"}
-                    stroke={isVisited ? dest.color : "#4a3880"}
-                    strokeWidth={1}
-                    style={{filter: isVisited ? `drop-shadow(0 0 6px ${dest.color})` : "none", transition:"all 0.2s"}} />
-                  {isVisited && (
-                    <text x={pt[0]} y={pt[1]-12} textAnchor="middle"
-                      style={{fontSize:"9px",fill:dest.color,fontWeight:"600",fontFamily:"Manrope,sans-serif",
-                        filter:"drop-shadow(0 1px 2px #000)",pointerEvents:"none"}}>
-                      ✓ {dest.name}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
+        {/* 天地图 */}
+        <div style={{borderRadius:"16px",overflow:"hidden",border:"1px solid rgba(244,114,182,0.2)",
+          boxShadow:"0 0 40px rgba(244,114,182,0.08)",marginBottom:"20px",height:"420px",position:"relative"}}>
+          <div ref={mapRef} style={{width:"100%",height:"100%"}} />
+          {!mapReady && (
+            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
+              background:"#0d0b1a",color:"#b8b5cc",fontSize:"14px"}}>地图加载中...</div>
+          )}
         </div>
 
-        {/* 选中目的地操作 */}
+        {/* 选中操作 */}
         {selected && (
-          <div style={{marginBottom:"20px",padding:"16px 20px",borderRadius:"14px",
+          <div style={{marginBottom:"18px",padding:"14px 18px",borderRadius:"12px",
             background:`linear-gradient(135deg,${selected.color}12,rgba(8,6,20,0.9))`,
             border:`1px solid ${selected.color}30`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:"12px"}}>
             <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
               <div style={{width:"10px",height:"10px",borderRadius:"50%",background:selected.color,boxShadow:`0 0 8px ${selected.color}`}}/>
-              <span style={{fontSize:"16px",fontWeight:"700",color:"#f0eeff"}}>{selected.name}</span>
+              <span style={{fontSize:"15px",fontWeight:"700",color:"#f0eeff"}}>{selected.name}</span>
               <span style={{fontSize:"12px",color:"#b8b5cc"}}>{selected.country} · {selected.region}</span>
             </div>
             <button onClick={() => toggleVisited(selected.id)}
-              style={{padding:"8px 20px",borderRadius:"9999px",fontSize:"13px",fontWeight:"600",cursor:"pointer",transition:"all 0.2s",
+              style={{padding:"8px 18px",borderRadius:"9999px",fontSize:"13px",fontWeight:"600",cursor:"pointer",
                 background: visited.includes(selected.id) ? "rgba(255,110,132,0.15)" : `${selected.color}20`,
                 color: visited.includes(selected.id) ? "#ff6e84" : selected.color,
                 border: visited.includes(selected.id) ? "1px solid rgba(255,110,132,0.3)" : `1px solid ${selected.color}40`}}>
@@ -140,21 +157,21 @@ const FootprintView = () => {
           </div>
         )}
 
-        {/* 目的地网格 - 点击标记 */}
+        {/* 目的地网格 */}
         <div>
-          <p style={{fontSize:"13px",fontWeight:"600",color:"#b8b5cc",marginBottom:"12px"}}>点击标记去过的地方</p>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px"}}>
+          <p style={{fontSize:"13px",fontWeight:"600",color:"#b8b5cc",marginBottom:"10px"}}>点击标记去过的地方</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:"8px"}}>
             {ALL_DESTINATIONS.map(dest => {
               const isVisited = visited.includes(dest.id);
               return (
                 <button key={dest.id} onClick={() => { toggleVisited(dest.id); setSelected(dest); }}
-                  style={{padding:"10px 12px",borderRadius:"12px",textAlign:"left",cursor:"pointer",transition:"all 0.15s",
+                  style={{padding:"9px 12px",borderRadius:"10px",textAlign:"left",cursor:"pointer",transition:"all 0.15s",
                     background: isVisited ? `${dest.color}18` : "rgba(255,255,255,0.03)",
                     border: isVisited ? `1px solid ${dest.color}40` : "1px solid rgba(255,255,255,0.07)",
                     display:"flex",alignItems:"center",gap:"8px"}}>
                   <div style={{width:"8px",height:"8px",borderRadius:"50%",flexShrink:0,
                     background: isVisited ? dest.color : "#2a2050",
-                    boxShadow: isVisited ? `0 0 6px ${dest.color}` : "none"}}/>
+                    boxShadow: isVisited ? `0 0 5px ${dest.color}` : "none"}}/>
                   <div>
                     <div style={{fontSize:"12px",fontWeight:"600",color: isVisited ? "#f0eeff" : "#b8b5cc"}}>
                       {isVisited && "✓ "}{dest.name}
@@ -167,14 +184,13 @@ const FootprintView = () => {
           </div>
         </div>
 
-        {/* 已访问列表 */}
         {visitedDests.length > 0 && (
-          <div style={{marginTop:"28px"}}>
-            <p style={{fontSize:"13px",fontWeight:"600",color:"#b8b5cc",marginBottom:"12px"}}>我的足迹</p>
+          <div style={{marginTop:"24px"}}>
+            <p style={{fontSize:"13px",fontWeight:"600",color:"#b8b5cc",marginBottom:"10px"}}>我的足迹</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>
               {visitedDests.map(dest => (
                 <div key={dest.id} style={{display:"flex",alignItems:"center",gap:"6px",
-                  padding:"6px 12px",borderRadius:"9999px",
+                  padding:"5px 12px",borderRadius:"9999px",
                   background:`${dest.color}15`,border:`1px solid ${dest.color}30`}}>
                   <div style={{width:"6px",height:"6px",borderRadius:"50%",background:dest.color}}/>
                   <span style={{fontSize:"12px",color:dest.color,fontWeight:"600"}}>{dest.name}</span>

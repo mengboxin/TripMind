@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 
 const ALL_DESTS = [
-  { id:"tokyo",    name:"东京",    country:"日本",     tag:"文化·科技", season:"春秋",  img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80", color:"#a78bfa", reason:"亚洲热门，适合文化探索" },
+  { id:"beijing",  name:"北京",    country:"中国",     tag:"历史·文化", season:"春秋",  img:"https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&q=80", color:"#c084fc", reason:"中国首都，历史文化底蕴深厚" },
   { id:"paris",    name:"巴黎",    country:"法国",     tag:"艺术·浪漫", season:"春秋",  img:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80", color:"#f472b6", reason:"欧洲经典，艺术与美食之都" },
   { id:"bali",     name:"巴厘岛",  country:"印尼",     tag:"海岛·度假", season:"夏",    img:"https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80", color:"#34d399", reason:"热带天堂，放松身心首选" },
   { id:"swiss",    name:"瑞士",    country:"瑞士",     tag:"自然·滑雪", season:"冬夏",  img:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", color:"#fb923c", reason:"阿尔卑斯山，自然奇观" },
@@ -33,12 +33,12 @@ const RecommendView = ({ favorites, onChat }) => {
 
   const TAGS = ["全部","亚洲","欧洲","美洲","大洋洲","海岛","都市","自然"];
   const tagMap = {
-    "亚洲":["tokyo","bali","dubai","bangkok","singapore","maldives"],
+    "亚洲":["beijing","bali","dubai","bangkok","singapore","maldives"],
     "欧洲":["paris","swiss","london","rome"],
     "美洲":["newyork"],
     "大洋洲":["sydney"],
     "海岛":["bali","maldives"],
-    "都市":["tokyo","newyork","london","singapore","dubai"],
+    "都市":["beijing","newyork","london","singapore","dubai"],
     "自然":["swiss","sydney","bali"],
   };
 

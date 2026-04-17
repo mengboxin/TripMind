@@ -12,7 +12,6 @@ const C = {
 };
 
 const DESTINATIONS = [
-  { id:"tokyo",     name:"东京",     country:"日本",       region:"亚洲",   tag:"文化·科技", lat:35.69,  lon:139.69,  img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",  desc:"融合传统与现代的都市，霓虹灯与神社并存，是亚洲最受欢迎的旅行目的地之一。", highlights:["浅草寺","新宿御苑","涩谷十字路口","筑地市场","秋叶原"], food:["寿司","拉面","天妇罗","抹茶甜品","居酒屋料理"], bestTime:"3-5月（樱花季）/ 10-11月（红叶季）", flights:"直飞约3.5小时" },
   { id:"beijing",  name:"北京", country:"中国", region:"亚洲", tag:"历史·文化", lat:39.90, lon:116.40, img:"https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=600&q=80", desc:"中国首都，故宫、长城与天坛见证了数千年的历史，胡同文化与现代都市交相辉映。", highlights:["故宫","长城","天坛","颐和园","南锣鼓巷"], food:["北京烤鸭","炸酱面","豆汁","驴打滚","糖葫芦"], bestTime:"4-5月 / 9-10月", flights:"国内航班" },
   { id:"shanghai", name:"上海", country:"中国", region:"亚洲", tag:"都市·时尚", lat:31.23, lon:121.47, img:"https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=600&q=80", desc:"东方巴黎，外滩的万国建筑群与陆家嘴的摩天大楼，是中国最国际化的大都市。", highlights:["外滩","东方明珠","豫园","新天地","田子坊"], food:["小笼包","生煎","红烧肉","蟹粉豆腐","本帮菜"], bestTime:"3-5月 / 9-11月", flights:"国内航班" },
   { id:"paris",     name:"巴黎",     country:"法国",       region:"欧洲",   tag:"艺术·浪漫", lat:48.85,  lon:2.35,    img:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80",  desc:"光之城，艺术与时尚的殿堂，埃菲尔铁塔下的浪漫让无数旅人魂牵梦绕。", highlights:["埃菲尔铁塔","卢浮宫","凡尔赛宫","蒙马特高地","塞纳河游船"], food:["法棍面包","可颂","法式蜗牛","鹅肝","马卡龙"], bestTime:"4-6月 / 9-10月", flights:"直飞约11小时" },
@@ -45,6 +44,7 @@ const DESTINATIONS = [
   { id:"lisbon",    name:"里斯本",   country:"葡萄牙",     region:"欧洲",   tag:"海港·法多", lat:38.72,  lon:-9.14,   img:"https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=600&q=80",  desc:"七丘之城，黄色电车穿梭于鹅卵石街道，法多音乐与葡式蛋挞令人沉醉。", highlights:["贝伦塔","热罗尼莫斯修道院","阿尔法玛老城","圣乔治城堡","辛特拉宫殿"], food:["葡式蛋挞","烤鳕鱼","猪肉夹面包","绿酒","葡萄牙海鲜饭"], bestTime:"3-5月 / 9-10月", flights:"转机约13小时" },
   { id:"phuket",    name:"普吉岛",   country:"泰国",       region:"亚洲",   tag:"海岛·潜水", lat:7.88,   lon:98.39,   img:"https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=600&q=80",  desc:"泰国最大岛屿，芭东海滩与皮皮岛的碧水白沙，是东南亚最受欢迎的海岛度假地。", highlights:["芭东海滩","皮皮岛","攀牙湾","大佛寺","老普吉镇"], food:["泰式炒河粉","冬阴功汤","芒果糯米饭","海鲜烧烤","椰子冰淇淋"], bestTime:"11月-4月", flights:"直飞约4小时" },
   { id:"zurich",    name:"苏黎世",   country:"瑞士",       region:"欧洲",   tag:"金融·湖光", lat:47.38,  lon:8.54,    img:"https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=600&q=80",  desc:"全球最宜居城市之一，苏黎世湖畔风光旖旎，老城区保存完好，购物与美食一流。", highlights:["苏黎世湖","老城区","格罗斯明斯特教堂","班霍夫大街","瑞士国家博物馆"], food:["奶酪火锅","瑞士巧克力","苏黎世小牛肉","格拉鲁斯奶酪","苹果酒"], bestTime:"5-9月", flights:"转机约12小时" },
+  { id:"tokyo",     name:"东京",     country:"日本",       region:"亚洲",   tag:"文化·科技", lat:35.69,  lon:139.69,  img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",  desc:"融合传统与现代的都市，霓虹灯与神社并存，是亚洲最受欢迎的旅行目的地之一。", highlights:["浅草寺","新宿御苑","涩谷十字路口","筑地市场","秋叶原"], food:["寿司","拉面","天妇罗","抹茶甜品","居酒屋料理"], bestTime:"3-5月（樱花季）/ 10-11月（红叶季）", flights:"直飞约3.5小时" },
 ];
 
 const PAGE_SIZE = 12;

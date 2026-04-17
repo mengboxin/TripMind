@@ -31,8 +31,8 @@ const C = {
 
 const BENTO = [
   { key:"itinerary", col:"md:col-span-2", row:"md:row-span-2",
-    img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
-    icon:"map", iconColor:"#b6a0ff", tag:"行程规划", title:"规划东京之旅", sub:"7天科技与传统的深度体验", overlay:true },
+    img:"https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800&q=80",
+    icon:"map", iconColor:"#b6a0ff", tag:"行程规划", title:"规划北京之旅", sub:"7天历史文化与现代都市体验", overlay:true },
   { key:"hotel", col:"md:col-span-2", row:"",
     img:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80",
     icon:"hotel", iconColor:"#8596ff", tag:"住宿推荐", title:"精选酒店推荐", sub:null, overlay:false },
@@ -388,7 +388,13 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [threadId, setThreadId] = useState(() => crypto.randomUUID());
+  const [threadId, setThreadId] = useState(() => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  });
   const [sessionTitle, setSessionTitle] = useState("");
   const [pendingApproval, setPendingApproval] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -403,6 +409,7 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
   const recognitionRef = useRef(null);
   const endRef = useRef(null);
   const textareaRef = useRef(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages]);
 
@@ -427,12 +434,7 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
 
   useEffect(() => { loadBookings(); }, [loadBookings]);
 
-  // 预加载数据到达时同步
-  useEffect(() => {
-    if (preloaded?.loaded && preloaded?.bookings) {
-      setBookings(preloaded.bookings);
-    }
-  }, [preloaded]);
+  // 预加载数据到达时同步（已在 loadBookings 里处理，无需重复）
   const saveSession = useCallback(async (msgs, title) => {
     if (!msgs.length) return;
     try {
@@ -450,9 +452,8 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
 
   const callApi = async (userInput, currentMsgs) => {
     setLoading(true);
-    // 先插入一条空的 AI 消息，后续流式填充
     const aiMsgId = Date.now() + 1;
-    setMessages(prev => [...prev, { id: aiMsgId, content: "", sender: "ai" }]);
+    let aiMsgInserted = false;
 
     try {
       const res = await fetch(`${API}/graph/stream/`, {
@@ -481,7 +482,14 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
             const data = JSON.parse(line.slice(6));
             if (data.delta) {
               fullText += data.delta;
-              setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: fullText } : m));
+              if (!aiMsgInserted) {
+                // 第一次有内容时才插入 AI 消息，避免 loading 气泡和空消息同时显示
+                aiMsgInserted = true;
+                setLoading(false);
+                setMessages([...currentMsgs, { id: aiMsgId, content: fullText, sender: "ai" }]);
+              } else {
+                setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: fullText } : m));
+              }
             }
             if (data.interrupt) interrupted = true;
             if (data.done) break;
@@ -491,6 +499,11 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
 
       if (interrupted) setPendingApproval(true);
       else setPendingApproval(false);
+
+      // 如果没有收到任何内容（interrupt 情况）
+      if (!aiMsgInserted) {
+        setMessages([...currentMsgs, { id: aiMsgId, content: "", sender: "ai" }]);
+      }
 
       // 检测订单成功通知
       const successKeywords = ["成功预定","成功预订","预订成功","预定成功","成功取消","成功更新","成功改签"];
@@ -506,7 +519,11 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
       saveSession(newMsgs, title);
 
     } catch (e) {
-      setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: `连接后端失败：${e.message}` } : m));
+      setMessages(prev => {
+        const hasMsg = prev.some(m => m.id === aiMsgId);
+        if (hasMsg) return prev.map(m => m.id === aiMsgId ? { ...m, content: `连接后端失败：${e.message}` } : m);
+        return [...prev, { id: aiMsgId, content: `连接后端失败：${e.message}`, sender: "ai" }];
+      });
     } finally {
       setLoading(false);
     }
@@ -514,11 +531,12 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
 
   const handleSend = (text) => {
     const content = (typeof text === "string" ? text : input).trim();
-    if (!content || loading) return;
+    if (!content || loading || sendingRef.current) return;
+    sendingRef.current = true;
     const newMsgs = [...messages, { id:Date.now(), content, sender:"user" }];
     setMessages(newMsgs);
     setInput("");
-    callApi(content, newMsgs);
+    callApi(content, newMsgs).finally(() => { sendingRef.current = false; });
   };
 
   const handleApprove = () => {
@@ -537,7 +555,13 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
 
   const handleNewChat = () => {
     setMessages([]); setInput(""); setPendingApproval(false);
-    setThreadId(crypto.randomUUID()); setSessionTitle("");
+    const newId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    setThreadId(newId); setSessionTitle("");
     setView("chat");
   };
 

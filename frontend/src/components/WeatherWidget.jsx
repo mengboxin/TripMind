@@ -47,7 +47,7 @@ const WeatherWidget = ({ cityName, lat, lon }) => {
     setError(false);
     const ctrl = new AbortController();
     const timeout = setTimeout(() => { ctrl.abort(); setError(true); setLoading(false); }, 25000);
-    const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:9000/api";
+    const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
     fetch(`${API_BASE}/weather/?city=${encodeURIComponent(cityName)}&days=4`, { signal: ctrl.signal })
       .then(r => r.json())
       .then(data => {

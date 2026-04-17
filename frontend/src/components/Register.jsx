@@ -137,14 +137,14 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
               <label style={{fontSize:"12px",fontWeight:"600",color:"rgba(255,255,255,0.5)",marginLeft:"2px"}} htmlFor="reg-pw">密码</label>
               <FieldIcon icon="lock">
                 <input id="reg-pw" type="password" value={password} onChange={e=>setPassword(e.target.value)} required
-                  placeholder="••••••••" className="w-full focus:outline-none" style={inputStyle}/>
+                  placeholder="请输入密码" className="w-full focus:outline-none" style={inputStyle}/>
               </FieldIcon>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
               <label style={{fontSize:"12px",fontWeight:"600",color:"rgba(255,255,255,0.5)",marginLeft:"2px"}} htmlFor="reg-confirm">确认密码</label>
               <FieldIcon icon="lock">
                 <input id="reg-confirm" type="password" value={confirm} onChange={e=>{setConfirm(e.target.value);setError("");}} required
-                  placeholder="••••••••" className="w-full focus:outline-none" style={inputStyle}/>
+                  placeholder="请再次输入密码" className="w-full focus:outline-none" style={inputStyle}/>
               </FieldIcon>
               {error && <p style={{fontSize:"12px",color:C.error,marginLeft:"2px"}}>{error}</p>}
             </div>
