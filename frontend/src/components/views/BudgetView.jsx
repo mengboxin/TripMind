@@ -210,7 +210,7 @@ const BudgetView = ({ token, preloaded, onRefresh }) => {
               <form onSubmit={handleSetup} style={{display:"flex",flexDirection:"column",gap:"14px"}}>
                 <div>
                   <label style={{fontSize:"12px",color:"#b8b5cc",display:"block",marginBottom:"6px"}}>旅行名称</label>
-                  <input value={tripName} onChange={e=>setTripName(e.target.value)} placeholder="如：东京7日游"
+                  <input value={tripName} onChange={e=>setTripName(e.target.value)} placeholder="如：北京7日游"
                     style={{width:"100%",padding:"10px 14px",borderRadius:"10px",background:"rgba(255,255,255,0.05)",
                       border:"1px solid rgba(255,255,255,0.1)",color:"#f0eeff",fontSize:"14px",outline:"none",boxSizing:"border-box"}}/>
                 </div>
@@ -257,7 +257,7 @@ const BudgetView = ({ token, preloaded, onRefresh }) => {
                 </div>
                 <div>
                   <label style={{fontSize:"12px",color:"#b8b5cc",display:"block",marginBottom:"6px"}}>消费说明</label>
-                  <input value={addDesc} onChange={e=>setAddDesc(e.target.value)} placeholder="如：东京成田机场往返" required
+                  <input value={addDesc} onChange={e=>setAddDesc(e.target.value)} placeholder="如：北京首都机场往返" required
                     style={{width:"100%",padding:"10px 14px",borderRadius:"10px",background:"rgba(255,255,255,0.05)",
                       border:"1px solid rgba(255,255,255,0.1)",color:"#f0eeff",fontSize:"14px",outline:"none",boxSizing:"border-box"}}/>
                 </div>

@@ -65,3 +65,35 @@
 20260414 14:51:10 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
 20260414 15:17:11 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
 20260414 15:17:11 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 13:39:41 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:53 - INFO -开始执行数据库日期更新任务...
+20260428 13:39:43 - SpawnProcess-1 | Thread-1 (run_update) | log_utils.__call__:59 - ERROR -数据库更新任务发生错误: (2003, "Can't connect to MySQL server on '127.0.0.1' ([WinError 10061] 由于目标计算机积极拒绝，无法连接。)")
+20260428 13:48:49 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 14:07:39 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:22:24 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:24:53 - SpawnProcess-2 | AnyIO worker thread | log_utils.error:69 - ERROR -邮件发送失败: Connection unexpectedly closed
+20260428 15:27:05 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:27:05 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:28:41 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:29:00 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:29:00 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:30:46 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:30:47 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -发送邮件: smtp.qq.com:465 ssl=True -> mengboxin137@gmail.com
+20260428 15:30:49 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -验证码邮件已发送至 mengboxin137@gmail.com，场景=reset_pwd
+20260428 15:40:06 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 15:40:06 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -发送邮件: smtp.qq.com:465 ssl=True -> mengboxin137@gmail.com
+20260428 15:40:08 - SpawnProcess-2 | AnyIO worker thread | log_utils.info:66 - INFO -验证码邮件已发送至 mengboxin137@gmail.com，场景=reset_pwd
+20260428 15:41:53 - SpawnProcess-2 | ThreadPoolExecutor-2_0 | log_utils.info:66 - INFO -搜索旅行建议 - Loc: 东京, Name: None, Keywords: 热门, 景点, 文化, 美食
+20260428 15:41:53 - SpawnProcess-2 | ThreadPoolExecutor-2_0 | log_utils.info:66 - INFO -地点转换: '东京' -> 'Tokyo'
+20260428 15:41:53 - SpawnProcess-2 | ThreadPoolExecutor-2_0 | log_utils.info:66 - INFO -搜索完成，找到 0 个旅行建议
+20260428 15:41:55 - SpawnProcess-2 | ThreadPoolExecutor-3_0 | log_utils.info:66 - INFO -搜索旅行建议 - Loc: 东京, Name: None, Keywords: None
+20260428 15:41:55 - SpawnProcess-2 | ThreadPoolExecutor-3_0 | log_utils.info:66 - INFO -地点转换: '东京' -> 'Tokyo'
+20260428 15:41:55 - SpawnProcess-2 | ThreadPoolExecutor-3_0 | log_utils.info:66 - INFO -搜索完成，找到 0 个旅行建议
+20260428 15:41:58 - SpawnProcess-2 | ThreadPoolExecutor-4_0 | log_utils.info:66 - INFO -搜索旅行建议 - Loc: Tokyo, Name: None, Keywords: sightseeing, experience, classic
+20260428 15:41:58 - SpawnProcess-2 | ThreadPoolExecutor-4_0 | log_utils.info:66 - INFO -搜索完成，找到 0 个旅行建议
+20260428 15:44:18 - SpawnProcess-2 | ThreadPoolExecutor-7_0 | log_utils.info:66 - INFO -查询天气: 北京, 3天
+20260428 15:44:23 - SpawnProcess-2 | ThreadPoolExecutor-8_0 | log_utils.info:66 - INFO -查询汇率: 1000.0 CNY -> USD
+20260428 15:44:26 - SpawnProcess-2 | ThreadPoolExecutor-8_0 | log_utils.error:69 - ERROR -汇率查询失败: HTTPSConnectionPool(host='open.er-api.com', port=443): Max retries exceeded with url: /v6/latest/CNY (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))
+20260428 16:09:40 - SpawnProcess-3 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 16:24:42 - SpawnProcess-4 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 16:25:31 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功
+20260428 16:25:31 - SpawnProcess-1 | AnyIO worker thread | log_utils.info:66 - INFO -Redis 连接成功

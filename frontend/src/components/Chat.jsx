@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import ExportButton from "./ExportButton";
 import DestinationsView from "./views/DestinationsView";
 import ItineraryView from "./views/ItineraryView";
@@ -321,20 +323,83 @@ const MsgContent = ({ text, isAi }) => {
   if (!isAi) return <span style={{whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{text}</span>;
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
       components={{
-        p: ({children}) => <p style={{margin:"0 0 8px",lineHeight:"1.75"}}>{children}</p>,
+        p: ({children}) => <p style={{margin:"0 0 10px",lineHeight:"1.8"}}>{children}</p>,
         strong: ({children}) => <strong style={{color:"#d4c8ff",fontWeight:"700"}}>{children}</strong>,
-        ul: ({children}) => <ul style={{paddingLeft:"18px",margin:"6px 0"}}>{children}</ul>,
-        ol: ({children}) => <ol style={{paddingLeft:"18px",margin:"6px 0"}}>{children}</ol>,
-        li: ({children}) => <li style={{margin:"3px 0",lineHeight:"1.6"}}>{children}</li>,
-        h1: ({children}) => <h1 className="headline-font" style={{fontSize:"16px",fontWeight:"700",color:"#d4c8ff",margin:"10px 0 6px"}}>{children}</h1>,
-        h2: ({children}) => <h2 className="headline-font" style={{fontSize:"15px",fontWeight:"700",color:"#d4c8ff",margin:"8px 0 5px"}}>{children}</h2>,
-        h3: ({children}) => <h3 style={{fontSize:"14px",fontWeight:"600",color:"#c4b8f0",margin:"6px 0 4px"}}>{children}</h3>,
+        em: ({children}) => <em style={{color:"#c4b8f0",fontStyle:"italic"}}>{children}</em>,
+        ul: ({children}) => <ul style={{paddingLeft:"20px",margin:"8px 0",display:"flex",flexDirection:"column",gap:"4px"}}>{children}</ul>,
+        ol: ({children}) => <ol style={{paddingLeft:"20px",margin:"8px 0",display:"flex",flexDirection:"column",gap:"4px"}}>{children}</ol>,
+        li: ({children}) => <li style={{lineHeight:"1.7",color:"#e2e0e8"}}>{children}</li>,
+        h1: ({children}) => (
+          <h1 className="headline-font" style={{fontSize:"18px",fontWeight:"800",color:"#e8e0ff",
+            margin:"16px 0 8px",paddingBottom:"6px",borderBottom:"1px solid rgba(167,139,250,0.25)"}}>{children}</h1>
+        ),
+        h2: ({children}) => (
+          <h2 className="headline-font" style={{fontSize:"16px",fontWeight:"700",color:"#d4c8ff",
+            margin:"14px 0 6px",display:"flex",alignItems:"center",gap:"6px"}}>
+            <span style={{width:"3px",height:"16px",background:"linear-gradient(to bottom,#b6a0ff,#7e51ff)",
+              borderRadius:"2px",display:"inline-block",flexShrink:0}}/>
+            {children}
+          </h2>
+        ),
+        h3: ({children}) => (
+          <h3 style={{fontSize:"14px",fontWeight:"700",color:"#c4b8f0",margin:"10px 0 5px"}}>{children}</h3>
+        ),
         code: ({inline, children}) => inline
-          ? <code style={{background:"rgba(167,139,250,0.15)",color:"#c4b8f0",padding:"1px 6px",borderRadius:"4px",fontSize:"13px"}}>{children}</code>
-          : <pre style={{background:"rgba(0,0,0,0.3)",padding:"12px",borderRadius:"8px",overflow:"auto",margin:"8px 0"}}><code style={{fontSize:"12px",color:"#c4b8f0"}}>{children}</code></pre>,
-        blockquote: ({children}) => <blockquote style={{borderLeft:"3px solid #a78bfa",paddingLeft:"12px",margin:"8px 0",color:"#b8b5cc"}}>{children}</blockquote>,
-        hr: () => <hr style={{border:"none",borderTop:"1px solid rgba(167,139,250,0.2)",margin:"10px 0"}}/>,
+          ? <code style={{background:"rgba(167,139,250,0.18)",color:"#c4b8f0",padding:"2px 7px",
+              borderRadius:"5px",fontSize:"13px",fontFamily:"'Courier New',monospace"}}>{children}</code>
+          : <pre style={{background:"rgba(0,0,0,0.4)",border:"1px solid rgba(167,139,250,0.15)",
+              padding:"14px 16px",borderRadius:"10px",overflow:"auto",margin:"10px 0"}}>
+              <code style={{fontSize:"12px",color:"#c4b8f0",fontFamily:"'Courier New',monospace",lineHeight:"1.6"}}>{children}</code>
+            </pre>,
+        blockquote: ({children}) => (
+          <blockquote style={{borderLeft:"3px solid #7c6af7",padding:"10px 14px",margin:"10px 0",
+            background:"rgba(124,106,247,0.06)",borderRadius:"0 8px 8px 0",color:"#b8b5cc"}}>{children}</blockquote>
+        ),
+        hr: () => <hr style={{border:"none",borderTop:"1px solid rgba(167,139,250,0.2)",margin:"14px 0"}}/>,
+        a: ({href, children}) => (
+          <a href={href} target="_blank" rel="noopener noreferrer"
+            style={{color:"#b6a0ff",textDecoration:"underline",textDecorationColor:"rgba(182,160,255,0.4)"}}>
+            {children}
+          </a>
+        ),
+        // 表格：宽松布局，不强制换行
+        table: ({children}) => (
+          <div style={{overflowX:"auto",margin:"14px -4px",borderRadius:"12px",
+            border:"1px solid rgba(167,139,250,0.25)",
+            boxShadow:"0 2px 16px rgba(124,106,247,0.1)"}}>
+            <table style={{borderCollapse:"collapse",width:"100%",fontSize:"13px",
+              lineHeight:"1.7",tableLayout:"auto"}}>{children}</table>
+          </div>
+        ),
+        thead: ({children}) => (
+          <thead style={{background:"linear-gradient(135deg,rgba(124,106,247,0.25),rgba(133,150,255,0.18))"}}>{children}</thead>
+        ),
+        tbody: ({children}) => <tbody>{children}</tbody>,
+        tr: ({children,node}) => {
+          const isEven = node?.position?.start?.line % 2 === 0;
+          return (
+            <tr style={{background: isEven ? "rgba(255,255,255,0.02)" : "transparent",
+              borderBottom:"1px solid rgba(167,139,250,0.12)",transition:"background 0.15s"}}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(182,160,255,0.07)"}
+              onMouseLeave={e=>e.currentTarget.style.background=isEven?"rgba(255,255,255,0.02)":"transparent"}>
+              {children}
+            </tr>
+          );
+        },
+        th: ({children}) => (
+          <th style={{padding:"11px 16px",textAlign:"left",color:"#c4b8f0",fontWeight:"700",
+            fontSize:"12px",textTransform:"uppercase",letterSpacing:"0.06em",
+            borderBottom:"2px solid rgba(167,139,250,0.35)",whiteSpace:"nowrap",
+            borderRight:"1px solid rgba(167,139,250,0.1)"}}>{children}</th>
+        ),
+        td: ({children}) => (
+          <td style={{padding:"11px 16px",color:"#e2e0e8",verticalAlign:"top",
+            lineHeight:"1.7",minWidth:"80px",
+            borderRight:"1px solid rgba(255,255,255,0.04)"}}>{children}</td>
+        ),
       }}
     >
       {text}
@@ -342,27 +407,60 @@ const MsgContent = ({ text, isAi }) => {
   );
 };
 
-const MessageList = ({ messages, loading, endRef }) => (
-  <div style={{flex:1,overflowY:"auto",paddingTop:"80px",paddingBottom:"180px"}}>
-    <div style={{maxWidth:"680px",margin:"0 auto",padding:"24px 32px",display:"flex",flexDirection:"column",gap:"20px"}}>
-      {messages.map(msg => (
-        <div key={msg.id} className="msg-enter" style={{display:"flex",gap:"12px",flexDirection:msg.sender==="user"?"row-reverse":"row",alignItems:"flex-start",width:"100%"}}>
-          <div style={{flexShrink:0,width:"30px",height:"30px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
-            background:msg.sender==="ai"?"linear-gradient(135deg,#b6a0ff,#7e51ff)":C.surfaceContainerHigh,marginTop:"2px"}}>
-            <span className="material-symbols-outlined" style={{fontSize:"14px",color:"white",fontVariationSettings:"'FILL' 1"}}>
-              {msg.sender==="ai"?"auto_awesome":"person"}
-            </span>
-          </div>
-          <div style={{maxWidth:"72%",padding:"11px 15px",
-            borderRadius:msg.sender==="user"?"16px 4px 16px 16px":"4px 16px 16px 16px",
-            fontSize:"14px",lineHeight:"1.75",wordBreak:"break-word",
-            background:msg.sender==="user"?"rgba(120,80,255,0.25)":"rgba(18,14,32,0.9)",
-            border:msg.sender==="user"?"1px solid rgba(129,140,248,0.25)":"1px solid rgba(255,255,255,0.05)",
-            color:C.onSurface}}>
-            <MsgContent text={msg.content} isAi={msg.sender==="ai"} />
-          </div>
-        </div>
+// ---- 推荐追问气泡 ----
+const SuggestionChips = ({ suggestions, onSend }) => {
+  if (!suggestions || !suggestions.length) return null;
+  return (
+    <div style={{display:"flex",flexWrap:"wrap",gap:"8px",marginTop:"10px"}}>
+      {suggestions.map((s, i) => (
+        <button key={i} onClick={() => onSend(s)}
+          style={{padding:"7px 16px",borderRadius:"9999px",fontSize:"12px",fontWeight:"600",
+            cursor:"pointer",border:"1px solid rgba(182,160,255,0.35)",
+            background:"rgba(182,160,255,0.08)",color:"#c4b8f0",
+            fontFamily:"Manrope,sans-serif",transition:"all 0.15s",
+            display:"flex",alignItems:"center",gap:"5px"}}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(182,160,255,0.2)";e.currentTarget.style.color="#e8e0ff";e.currentTarget.style.borderColor="rgba(182,160,255,0.6)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="rgba(182,160,255,0.08)";e.currentTarget.style.color="#c4b8f0";e.currentTarget.style.borderColor="rgba(182,160,255,0.35)";}}>
+          <span style={{fontSize:"10px",opacity:0.6}}>✦</span>
+          {s}
+        </button>
       ))}
+    </div>
+  );
+};
+
+const MessageList = ({ messages, loading, endRef, onSend }) => (
+  <div style={{flex:1,overflowY:"auto",paddingTop:"80px",paddingBottom:"180px"}}>
+    <div style={{maxWidth:"760px",margin:"0 auto",padding:"24px 32px",display:"flex",flexDirection:"column",gap:"20px"}}>
+      {messages.map((msg, idx) => {
+        const isLastAi = msg.sender === "ai" && idx === messages.length - 1 && !loading;
+        return (
+          <div key={msg.id} className="msg-enter">
+            <div style={{display:"flex",gap:"12px",flexDirection:msg.sender==="user"?"row-reverse":"row",alignItems:"flex-start",width:"100%"}}>
+              <div style={{flexShrink:0,width:"30px",height:"30px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
+                background:msg.sender==="ai"?"linear-gradient(135deg,#b6a0ff,#7e51ff)":C.surfaceContainerHigh,marginTop:"2px"}}>
+                <span className="material-symbols-outlined" style={{fontSize:"14px",color:"white",fontVariationSettings:"'FILL' 1"}}>
+                  {msg.sender==="ai"?"auto_awesome":"person"}
+                </span>
+              </div>
+              <div style={{maxWidth:"88%",padding:"12px 16px",
+                borderRadius:msg.sender==="user"?"16px 4px 16px 16px":"4px 16px 16px 16px",
+                fontSize:"14px",lineHeight:"1.75",wordBreak:"break-word",
+                background:msg.sender==="user"?"rgba(120,80,255,0.25)":"rgba(18,14,32,0.9)",
+                border:msg.sender==="user"?"1px solid rgba(129,140,248,0.25)":"1px solid rgba(255,255,255,0.06)",
+                color:C.onSurface}}>
+                <MsgContent text={msg.content} isAi={msg.sender==="ai"} />
+              </div>
+            </div>
+            {/* AI 回复下方：推荐追问（由后端生成） */}
+            {isLastAi && msg.suggestions?.length > 0 && (
+              <div style={{paddingLeft:"42px",marginTop:"6px"}}>
+                <SuggestionChips suggestions={msg.suggestions} onSend={onSend} />
+              </div>
+            )}
+          </div>
+        );
+      })}
       {loading && (
         <div className="msg-enter" style={{display:"flex",gap:"12px",alignItems:"flex-start"}}>
           <div style={{flexShrink:0,width:"30px",height:"30px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
@@ -470,6 +568,7 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
       const decoder = new TextDecoder();
       let fullText = "";
       let interrupted = false;
+      let suggestions = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -483,13 +582,17 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
             if (data.delta) {
               fullText += data.delta;
               if (!aiMsgInserted) {
-                // 第一次有内容时才插入 AI 消息，避免 loading 气泡和空消息同时显示
                 aiMsgInserted = true;
                 setLoading(false);
                 setMessages([...currentMsgs, { id: aiMsgId, content: fullText, sender: "ai" }]);
               } else {
                 setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: fullText } : m));
               }
+            }
+            if (data.suggestions) {
+              suggestions = data.suggestions;
+              // 把推荐追问附加到消息对象
+              setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, suggestions } : m));
             }
             if (data.interrupt) interrupted = true;
             if (data.done) break;
@@ -809,7 +912,7 @@ const Chat = ({ onLogout, token, username, createTime, preloaded, onRefreshPrelo
           {view === "favorites"    && <FavoritesView onChat={handleChatFromView} favorites={favorites} onToggleFav={handleToggleFav} />}
           {view === "settings"     && <SettingsView username={username} />}
           {view === "help"         && <HelpView onChat={handleChatFromView} />}
-          {view === "chat" && (isNew ? <WelcomeView onSend={handleSend} /> : <MessageList messages={messages} loading={loading} endRef={endRef} />)}
+          {view === "chat" && (isNew ? <WelcomeView onSend={handleSend} /> : <MessageList messages={messages} loading={loading} endRef={endRef} onSend={handleSend} />)}
         </div>
 
         {pendingApproval && (

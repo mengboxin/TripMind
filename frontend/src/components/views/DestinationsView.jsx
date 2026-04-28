@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import WeatherWidget from "../WeatherWidget";
+
+const API = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 
 const C = {
   surface: "#0e0e13",
@@ -65,7 +67,7 @@ const DestinationCard = ({ dest, isFav, onToggleFav, onOpen }) => (
       <span style={{position:"absolute",top:"10px",left:"12px",fontSize:"10px",
         color:"rgba(255,255,255,0.7)",background:"rgba(0,0,0,0.3)",padding:"2px 7px",borderRadius:"9999px"}}>{dest.region}</span>
     </div>
-    <button onClick={e=>{e.stopPropagation();onToggleFav(dest.id);}}
+    <button onClick={e=>{e.stopPropagation();onToggleFav(dest.dest_id || dest.id);}}
       style={{position:"absolute",top:"10px",right:"10px",width:"32px",height:"32px",borderRadius:"50%",
         background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)",border:"none",cursor:"pointer",
         display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}}>
@@ -104,7 +106,7 @@ const DestinationDetail = ({ dest, isFav, onToggleFav, onClose, onChat }) => (
           display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)"}}>
           <span className="material-symbols-outlined" style={{color:"white",fontSize:"20px"}}>arrow_back</span>
         </button>
-        <button onClick={()=>onToggleFav(dest.id)} style={{position:"absolute",top:"14px",right:"14px",width:"36px",height:"36px",
+        <button onClick={()=>onToggleFav(dest.dest_id || dest.id)} style={{position:"absolute",top:"14px",right:"14px",width:"36px",height:"36px",
           borderRadius:"50%",background:"rgba(0,0,0,0.5)",border:"none",cursor:"pointer",
           display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)"}}>
           <span className="material-symbols-outlined" style={{fontSize:"20px",
@@ -116,7 +118,7 @@ const DestinationDetail = ({ dest, isFav, onToggleFav, onClose, onChat }) => (
         </div>
       </div>
       <div style={{padding:"20px 24px 28px"}}>
-        <p style={{fontSize:"14px",color:C.onSurfaceVariant,lineHeight:"1.8",marginBottom:"16px"}}>{dest.desc}</p>
+        <p style={{fontSize:"14px",color:C.onSurfaceVariant,lineHeight:"1.8",marginBottom:"16px"}}>{dest.description || dest.desc}</p>
         <div style={{marginBottom:"16px"}}>
           <WeatherWidget cityName={dest.name} lat={dest.lat} lon={dest.lon} />
         </div>
@@ -160,19 +162,27 @@ const DestinationDetail = ({ dest, isFav, onToggleFav, onClose, onChat }) => (
 );
 
 const DestinationsView = ({ onChat, favorites, onToggleFav }) => {
+  const [destinations, setDestinations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("全部");
   const [page, setPage] = useState(1);
+  const [loadingDests, setLoadingDests] = useState(true);
 
-  const filtered = DESTINATIONS.filter(d => {
-    const matchRegion = region === "全部" || d.region === region;
-    const matchSearch = !search || d.name.includes(search) || d.country.includes(search) || d.tag.includes(search);
-    return matchRegion && matchSearch;
-  });
+  useEffect(() => {
+    setLoadingDests(true);
+    const params = new URLSearchParams();
+    if (region && region !== "全部") params.set("region", region);
+    if (search) params.set("keyword", search);
+    fetch(`${API}/destinations/?${params}`)
+      .then(r => r.json())
+      .then(data => setDestinations(Array.isArray(data) ? data : []))
+      .catch(() => setDestinations([]))
+      .finally(() => setLoadingDests(false));
+  }, [region, search]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+  const totalPages = Math.ceil(destinations.length / PAGE_SIZE);
+  const paged = destinations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleRegion = (r) => { setRegion(r); setPage(1); };
   const handleSearch = (v) => { setSearch(v); setPage(1); };
@@ -209,14 +219,16 @@ const DestinationsView = ({ onChat, favorites, onToggleFav }) => {
 
         {/* 结果数量 */}
         <p style={{fontSize:"13px",color:"#acaab1",marginBottom:"16px"}}>
-          共 {filtered.length} 个结果，第 {page}/{totalPages} 页
+          共 {destinations.length} 个结果，第 {page}/{totalPages || 1} 页
         </p>
 
         {/* 卡片网格 */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:"16px",marginBottom:"28px"}}>
-          {paged.map(dest => (
-            <DestinationCard key={dest.id} dest={dest}
-              isFav={favorites.includes(dest.id)}
+          {loadingDests
+            ? <p style={{color:"#acaab1",gridColumn:"1/-1",textAlign:"center",padding:"40px"}}>加载中...</p>
+            : paged.map(dest => (
+            <DestinationCard key={dest.dest_id || dest.id} dest={dest}
+              isFav={favorites.includes(dest.dest_id || dest.id)}
               onToggleFav={onToggleFav}
               onOpen={setSelected} />
           ))}
@@ -249,7 +261,7 @@ const DestinationsView = ({ onChat, favorites, onToggleFav }) => {
 
       {selected && (
         <DestinationDetail dest={selected}
-          isFav={favorites.includes(selected.id)}
+          isFav={favorites.includes(selected.dest_id || selected.id)}
           onToggleFav={onToggleFav}
           onClose={() => setSelected(null)}
           onChat={(msg) => { onChat(msg); setSelected(null); }} />

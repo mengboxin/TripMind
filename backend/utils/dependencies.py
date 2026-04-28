@@ -6,14 +6,13 @@ from db import sm
 
 def get_db(request: Request) -> Session:
     """
-    session的依赖注入函数, 每个视图函数的操作，都会有一个独立新session
-    :param request:
-    :return:
+    session 依赖注入，每个请求独立 session，异常时自动回滚
     """
+    session = sm()
     try:
-        session = sm()
         yield session
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
-
-

@@ -35,10 +35,8 @@ class MyOAuth2PasswordBearer(OAuth2PasswordBearer):
         :param request:
         :return:
         """
-        path: str = request.get('path')
-        # 根据白名单来过滤
+        path: str = request.url.path
         for request_path in settings.WHITE_LIST:
-            if re.match(request_path, path):
+            if re.match(r'^' + re.escape(request_path), path):
                 return ''
-        else:  # 请求路径不是白名单里面的
-            return super().__call__(request)
+        return await super().__call__(request)

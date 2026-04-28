@@ -1,6 +1,7 @@
 import uvicorn
 from pathlib import Path
 from fastapi import FastAPI, Depends
+from fastapi.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 from config import settings
 from utils import handler_error, cors, middlewares
@@ -32,10 +33,29 @@ def _mark_updated():
 
 def create_app() -> FastAPI:
     init_log()
+    import os
+    is_prod = os.getenv("EMP_ENV", "").lower() == "production"
+
     my_oauth2 = MyOAuth2PasswordBearer(tokenUrl="/api/auth/", schema="JWT")
-    _app = FastAPI(dependencies=[Depends(my_oauth2)])
+    _app = FastAPI(
+        dependencies=[Depends(my_oauth2)],
+        # 生产环境关闭 Swagger UI 和 ReDoc，防止接口信息泄露
+        docs_url=None if is_prod else "/docs",
+        redoc_url=None if is_prod else "/redoc",
+        openapi_url=None if is_prod else "/openapi.json",
+    )
     if STATIC_DIR.exists():
         _app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="my_static")
+
+    # 手机端两个效果页面路由
+    @_app.get("/mobile/v1", include_in_schema=False)
+    async def mobile_v1():
+        return FileResponse(str(STATIC_DIR / "mobile_v1.html"))
+
+    @_app.get("/mobile/v2", include_in_schema=False)
+    async def mobile_v2():
+        return FileResponse(str(STATIC_DIR / "mobile_v2.html"))
+
     handler_error.init_handler_errors(_app)
     middlewares.init_middleware(_app)
     cors.init_cors(_app)

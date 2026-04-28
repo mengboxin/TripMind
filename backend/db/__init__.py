@@ -16,7 +16,16 @@ url = URL(
     query=settings.DATABASE.get('QUERY', None),
 )
 
-engine = create_engine(url, echo=True, future=True, pool_size=10)
+engine = create_engine(
+    url,
+    echo=True,
+    future=True,
+    pool_size=10,
+    max_overflow=20,     # 连接池满时最多额外创建 20 个连接
+    pool_timeout=30,     # 等待连接超时时间（秒）
+    pool_recycle=1800,   # 30分钟回收连接，避免超过 MySQL wait_timeout
+    pool_pre_ping=True,  # 每次使用前 ping 检测，自动丢弃失效连接
+)
 
 sm = sessionmaker(bind=engine, autoflush=True, autocommit=False)
 

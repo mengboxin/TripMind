@@ -20,6 +20,7 @@ JWT_SECRET_KEY: "change-this-to-a-long-random-secret-in-production"
 ALGORITHM: HS256
 ACCESS_TOKEN_EXPIRE_MINUTES: 43200   # 生产环境 token 30天有效
 
-WHITE_LIST: ['/api/login', '/api/register', '/static', '/docs', '/swagger', '/openapi', '/api/auth', '/api/weather']
+# 生产环境去掉 /docs /swagger /openapi，不对外暴露接口文档
+WHITE_LIST: ['/api/login', '/api/register', '/api/reset_password', '/static', '/api/auth', '/api/weather', '/mobile']
 
 DEFAULT_PASSWORD: "change-this-default-password"

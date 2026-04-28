@@ -76,11 +76,40 @@ def execute_graph_stream(request: Request, obj_in: BaseGraphSchema):
                                 yield f"data: {json.dumps({'delta': delta}, ensure_ascii=False)}\n\n"
 
             if graph.get_state(config).next:
-                msg = "AI助手马上根据你要求，执行相关操作。您是否批准上述操作？输入'y'继续；否则，请说明您请求的更改。\n"
+                if not result:
+                    intro = "好的，我来为您执行这个操作。\n\n"
+                    yield f"data: {json.dumps({'delta': intro}, ensure_ascii=False)}\n\n"
+                msg = "**需要您的确认才能继续。** 是否批准上述操作？点击下方按钮确认或拒绝。\n"
                 yield f"data: {json.dumps({'delta': msg, 'interrupt': True}, ensure_ascii=False)}\n\n"
+            else:
+                # 主流程结束，生成推荐追问（仅非 interrupt 情况）
+                if result and len(result) > 50 and question.strip().lower() != 'y':
+                    try:
+                        from graph_chat.llm import llm
+                        prompt = f"""用户刚问了："{question[:100]}"
+我的回复摘要：{result[:300]}...
 
-            yield f"data: {json.dumps({'done': True}, ensure_ascii=False)}\n\n"
+请根据上下文生成3个简短的追问建议（每个10-15字），帮助用户深入了解或继续规划。
+要求：
+1. 每行一个问题，不要序号
+2. 问题要具体、可操作
+3. 符合旅行规划场景
+
+示例格式：
+帮我细化第一天的行程
+推荐附近性价比高的酒店
+怎么从机场到市区最方便？"""
+                        resp = llm.invoke(prompt, config={"max_tokens": 150, "temperature": 0.8})
+                        suggestions = [s.strip() for s in resp.content.strip().split('\n') if s.strip() and len(s.strip()) > 5][:3]
+                        if suggestions:
+                            yield f"data: {json.dumps({'suggestions': suggestions}, ensure_ascii=False)}\n\n"
+                    except Exception as e:
+                        log.warning(f"生成追问失败: {e}")
+                yield f"data: {json.dumps({'done': True}, ensure_ascii=False)}\n\n"
+
         except Exception as e:
+            import traceback
+            log.error(f"流式输出异常: {traceback.format_exc()}")
             yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream",
@@ -241,3 +270,17 @@ def get_user_bookings(request: Request):
     from utils.cache_utils import cache_set
     cache_set(cache_key, result, ttl=300)
     return result
+
+
+@router.delete('/chat/history/clear/', description='清除当前用户所有对话历史')
+def clear_chat_history(request: Request):
+    username = request.state.username
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM t_chat_history WHERE username = %s", (username,))
+            conn.commit()
+    except Exception as e:
+        log.error(f"清除历史失败: {e}")
+        return {'ok': False, 'error': str(e)}
+    return {'ok': True}

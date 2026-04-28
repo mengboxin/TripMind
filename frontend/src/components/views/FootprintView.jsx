@@ -129,8 +129,11 @@ const FootprintView = () => {
 
         {/* 天地图 */}
         <div style={{borderRadius:"16px",overflow:"hidden",border:"1px solid rgba(244,114,182,0.2)",
-          boxShadow:"0 0 40px rgba(244,114,182,0.08)",marginBottom:"20px",height:"420px",position:"relative"}}>
-          <div ref={mapRef} style={{width:"100%",height:"100%"}} />
+          boxShadow:"0 0 40px rgba(244,114,182,0.08)",marginBottom:"20px",
+          height:"min(420px, 40dvh)",
+          position:"relative",
+          touchAction:"none"}}>
+          <div ref={mapRef} style={{width:"100%",height:"100%",touchAction:"none"}} />
           {!mapReady && (
             <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
               background:"#0d0b1a",color:"#b8b5cc",fontSize:"14px"}}>地图加载中...</div>

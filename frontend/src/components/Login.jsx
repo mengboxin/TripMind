@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+
+const API = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 
 const C = {
   onSurface: "#f6f2fa",
@@ -16,11 +18,127 @@ const FieldIcon = ({ icon, children }) => (
   </div>
 );
 
+// 忘记密码弹窗
+const ForgotPwdModal = ({ onClose }) => {
+  const [step, setStep]         = useState(1); // 1=填信息 2=成功
+  const [email, setEmail]       = useState("");
+  const [otp, setOtp]           = useState("");
+  const [newPwd, setNewPwd]     = useState("");
+  const [confirm, setConfirm]   = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [countdown, setCountdown]   = useState(0);
+  const [err, setErr]           = useState("");
+  const timerRef = useRef(null);
+  const mouseDownOnMask = useRef(false);
+
+  const startCountdown = () => {
+    setCountdown(60);
+    timerRef.current = setInterval(() => {
+      setCountdown(v => { if (v <= 1) { clearInterval(timerRef.current); return 0; } return v - 1; });
+    }, 1000);
+  };
+
+  const handleSendOtp = async () => {
+    if (!email) { setErr("请先填写邮箱"); return; }
+    setOtpLoading(true); setErr("");
+    try {
+      const res = await fetch(`${API}/send_otp/`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, scene: "reset_pwd" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.detail || "发送失败，请重试"); return; }
+      startCountdown();
+      setErr(""); // 清除旧错误，显示发送成功提示
+    } catch { setErr("网络错误，请重试"); }
+    finally { setOtpLoading(false); }
+  };
+
+  const inputStyle = {
+    width:"100%",height:"44px",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(182,160,255,0.2)",
+    borderRadius:"10px",padding:"0 14px",color:"white",fontSize:"14px",outline:"none",boxSizing:"border-box",
+    fontFamily:"Manrope,sans-serif",
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (newPwd !== confirm) { setErr("两次密码不一致"); return; }
+    if (newPwd.length < 6) { setErr("新密码至少6位"); return; }
+    if (!otp) { setErr("请输入验证码"); return; }
+    setLoading(true); setErr("");
+    try {
+      const res = await fetch(`${API}/reset_password/`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, new_password: newPwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.detail || "验证失败，请重试"); return; }
+      setStep(2);
+    } catch { setErr("网络错误，请重试"); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div
+      style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",
+        display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}
+      onMouseDown={e => { mouseDownOnMask.current = e.target === e.currentTarget; }}
+      onMouseUp={e => { if (mouseDownOnMask.current && e.target === e.currentTarget) onClose(); mouseDownOnMask.current = false; }}
+    >
+      <div style={{width:"100%",maxWidth:"380px",background:"rgba(18,14,32,0.95)",borderRadius:"20px",
+        padding:"28px",border:"1px solid rgba(182,160,255,0.15)"}} onMouseDown={e=>e.stopPropagation()}>
+        {step === 1 ? (
+          <>
+            <h3 style={{margin:"0 0 6px",fontSize:"20px",fontWeight:"700",color:"white",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>重置密码</h3>
+            <p style={{margin:"0 0 20px",fontSize:"13px",color:"rgba(255,255,255,0.5)"}}>向注册邮箱发送验证码来重置密码</p>
+            <form onSubmit={handleSubmit} autoComplete="off" style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+              <div style={{display:"flex",gap:"8px"}}>
+                <input type="email" placeholder="注册邮箱" value={email} autoComplete="off"
+                  onChange={e=>setEmail(e.target.value)} required style={{...inputStyle,flex:1}} />
+                <button type="button" onClick={e=>{e.stopPropagation();handleSendOtp();}} disabled={otpLoading||countdown>0}
+                  style={{flexShrink:0,padding:"0 12px",borderRadius:"10px",border:"none",cursor:"pointer",
+                    background:countdown>0?"rgba(255,255,255,0.08)":"linear-gradient(to right,#b6a0ff,#7e51ff)",
+                    color:countdown>0?"rgba(255,255,255,0.4)":"#340090",fontSize:"12px",fontWeight:"700",
+                    whiteSpace:"nowrap",fontFamily:"Manrope,sans-serif",opacity:otpLoading?0.7:1}}>
+                  {otpLoading?"发送中":countdown>0?`${countdown}s`:"发送验证码"}
+                </button>
+              </div>
+              <input placeholder="邮箱验证码" value={otp} autoComplete="one-time-code"
+                onChange={e=>setOtp(e.target.value)} required maxLength={6} style={inputStyle} />
+              <input type="password" placeholder="新密码（至少6位）" value={newPwd} autoComplete="new-password"
+                onChange={e=>setNewPwd(e.target.value)} required style={inputStyle} />
+              <input type="password" placeholder="确认新密码" value={confirm} autoComplete="new-password"
+                onChange={e=>setConfirm(e.target.value)} required style={inputStyle} />
+              {err && <p style={{margin:0,fontSize:"13px",color:"#ff6e84"}}>{err}</p>}
+              {!err && countdown>0 && <p style={{margin:0,fontSize:"13px",color:"#34d399"}}>✓ 验证码已发送至 {email}</p>}
+              <div style={{display:"flex",gap:"10px",marginTop:"4px"}}>
+                <button type="button" onClick={onClose} style={{flex:1,height:"44px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",fontSize:"14px",fontFamily:"Manrope,sans-serif"}}>取消</button>
+                <button type="submit" disabled={loading} style={{flex:2,height:"44px",borderRadius:"10px",border:"none",cursor:"pointer",background:"linear-gradient(to right,#b6a0ff,#7e51ff)",color:"#340090",fontSize:"14px",fontWeight:"700",fontFamily:"Manrope,sans-serif",opacity:loading?0.7:1}}>
+                  {loading ? "重置中..." : "重置密码"}
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div style={{textAlign:"center",padding:"12px 0"}}>
+            <div style={{fontSize:"48px",marginBottom:"16px"}}>✅</div>
+            <h3 style={{margin:"0 0 8px",fontSize:"18px",fontWeight:"700",color:"white",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>密码重置成功</h3>
+            <p style={{margin:"0 0 20px",fontSize:"14px",color:"rgba(255,255,255,0.5)"}}>请用新密码重新登录</p>
+            <button onClick={onClose} style={{padding:"10px 32px",borderRadius:"9999px",border:"none",cursor:"pointer",background:"linear-gradient(to right,#b6a0ff,#7e51ff)",color:"#340090",fontWeight:"700",fontSize:"14px",fontFamily:"Manrope,sans-serif"}}>去登录</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Login = ({ onLogin, onSwitchToRegister }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showForgot, setShowForgot] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,6 +161,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
   };
 
   return (
+    <>
     <div style={{position:"relative",minHeight:"100vh",overflow:"hidden"}}>
 
       {/* 全屏背景图 */}
@@ -127,7 +246,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
             <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginLeft:"2px"}}>
                 <label style={{fontSize:"12px",fontWeight:"600",color:"rgba(255,255,255,0.5)"}} htmlFor="password">密码</label>
-                <a href="#" style={{fontSize:"12px",fontWeight:"600",color:C.primary,textDecoration:"none"}}>忘记密码？</a>
+                <a href="#" onClick={e=>{e.preventDefault();setShowForgot(true);}} style={{fontSize:"12px",fontWeight:"600",color:C.primary,textDecoration:"none"}}>忘记密码？</a>
               </div>
               <FieldIcon icon="lock">
                 <input id="password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required
@@ -179,6 +298,8 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         </div>
       </div>
     </div>
+    {showForgot && <ForgotPwdModal onClose={() => setShowForgot(false)} />}
+  </>
   );
 };
 

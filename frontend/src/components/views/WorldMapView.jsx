@@ -150,8 +150,10 @@ const WorldMapView = ({ favorites, onToggleFav, onChat }) => {
 
         {/* 天地图容器 */}
         <div style={{borderRadius:"16px",overflow:"hidden",border:"1px solid rgba(139,92,246,0.25)",
-          boxShadow:"0 0 40px rgba(139,92,246,0.1)",position:"relative",height:"480px"}}>
-          <div ref={mapRef} style={{width:"100%",height:"100%"}} />
+          boxShadow:"0 0 40px rgba(139,92,246,0.1)",position:"relative",
+          height:"min(480px, 45dvh)",
+          touchAction:"none"}}>
+          <div ref={mapRef} style={{width:"100%",height:"100%",touchAction:"none"}} />
           {!mapReady && (
             <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
               background:"#0d0b1a",color:"#b8b5cc",fontSize:"14px"}}>

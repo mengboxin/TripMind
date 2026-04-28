@@ -1,68 +1,109 @@
 import logging
-from typing import List
+import random
+from typing import List, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from starlette import status
+from starlette.requests import Request
 
-from api.system_mgt.user_schemas import CreateOrUpdateUserSchema, UserSchema, UserLoginRspSchema, UserLoginSchema, \
-    GetUserList
+from api.system_mgt.user_schemas import (
+    CreateOrUpdateUserSchema, UserSchema, UserLoginRspSchema,
+    UserLoginSchema, GetUserList
+)
 from config import settings
 from db.system_mgt.user_dao import UserDao
 from utils.dependencies import get_db
+from utils.email_utils import generate_otp, save_otp, verify_otp, send_otp_email
 from utils.jwt_utils import create_token
 from utils.password_hash import get_hashed_password, verify_password
 
-# 创建分路由
 router = APIRouter()
-# 创建dao类的对象实例
 _dao = UserDao()
-
 log = logging.getLogger('emp')
 
+_AUTH_FAIL_MSG = '用户名或密码错误'
+
+
+def _gen_unique_passenger_id(session) -> str:
+    """生成不重复的 passenger_id"""
+    from sqlalchemy import select
+    from db.system_mgt.models import UserModel
+    for _ in range(10):
+        pid = f"{random.randint(1000, 9999)} {random.randint(100000, 999999)}"
+        exists = session.execute(
+            select(UserModel).where(UserModel.passenger_id == pid)
+        ).scalars().first()
+        if not exists:
+            return pid
+    raise HTTPException(status_code=500, detail="生成旅客ID失败，请重试")
+
+
+# ── 用户 CRUD ─────────────────────────────────────────────
 
 @router.get('/users/getUsers/', description='得到所有的用户信息', response_model=List[GetUserList])
 def get_users(session: Session = Depends(get_db)):
     return _dao.get(session)
 
 
-@router.get('/users/{pk}/', description='根据主键查询用户信息', summary='单个查询', response_model=UserSchema)
+@router.get('/users/{pk}/', description='根据主键查询用户信息', response_model=UserSchema)
 def get_by_id(pk: int, session: Session = Depends(get_db)):
     return _dao.get_by_id(session, pk)
 
 
-@router.post('/register/', description='创建用户', summary='用户注册', response_model=UserSchema)
-def create(obj_in: CreateOrUpdateUserSchema, session: Session = Depends(get_db)):
-    if not obj_in.password:
-        obj_in.password = str(settings.DEFAULT_PASSWORD)
-    obj_in.password = get_hashed_password(obj_in.password)
-
-    # 新用户自动生成唯一的 passenger_id（格式：4位数字 + 空格 + 6位数字，与数据库格式一致）
-    if not obj_in.passenger_id:
-        import random
-        obj_in.passenger_id = f"{random.randint(1000,9999)} {random.randint(100000,999999)}"
-
-    return _dao.create(session, obj_in)
+class RegisterSchema(BaseModel):
+    """注册专用 Schema：邮箱必填，用户名可选（默认取邮箱前缀）"""
+    email: str
+    otp: str
+    password: str
+    username: Union[str, None] = None   # 不填则自动用邮箱前缀
+    phone: Union[str, None] = None
+    real_name: Union[str, None] = None
 
 
-@router.post('/login/', description='用户登录', summary='用户登录', response_model=UserLoginRspSchema)
+@router.post('/register/', description='用户注册（邮箱验证码）', response_model=UserSchema)
+def create(obj_in: RegisterSchema, session: Session = Depends(get_db)):
+    # 校验邮箱验证码
+    if not verify_otp('register', obj_in.email, obj_in.otp):
+        raise HTTPException(status_code=400, detail='验证码错误或已过期')
+    # 密码长度
+    if len(obj_in.password) < 6:
+        raise HTTPException(status_code=400, detail='密码至少6位')
+    # 自动生成用户名
+    username = (obj_in.username or obj_in.email.split('@')[0]).strip()
+    # 用户名/邮箱唯一性检查
+    if _dao.get_user_by_username(session, username):
+        raise HTTPException(status_code=400, detail='用户名已存在，请换一个')
+    from sqlalchemy import select
+    from db.system_mgt.models import UserModel
+    email_exists = session.execute(
+        select(UserModel).where(UserModel.email == obj_in.email)
+    ).scalars().first()
+    if email_exists:
+        raise HTTPException(status_code=400, detail='该邮箱已注册')
+    user_data = CreateOrUpdateUserSchema(
+        username=username,
+        password=get_hashed_password(obj_in.password),
+        email=obj_in.email,
+        phone=obj_in.phone,
+        real_name=obj_in.real_name,
+    )
+    user_data.passenger_id = _gen_unique_passenger_id(session)
+    return _dao.create(session, user_data)
+@router.post('/login/', description='用户登录（用户名或邮箱均可）', response_model=UserLoginRspSchema)
 def login(obj_in: UserLoginSchema, session: Session = Depends(get_db)):
-    # 实现用户登录，成功之后返回用户信息，包括token
-    # 第一步：根据用户名去查询用户
+    # 先按用户名查，再按邮箱查
     user = _dao.get_user_by_username(session, obj_in.username)
-    log.info(user)
-    if not user:  # 用户不存在
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f'用户名{obj_in.username}，在数据库表中不存在!'
-        )
-    if not verify_password(obj_in.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f'登录密码错误'
-        )
-    # 代码执行到此，则登录成功
+    if not user:
+        from sqlalchemy import select
+        from db.system_mgt.models import UserModel
+        user = session.execute(
+            select(UserModel).where(UserModel.email == obj_in.username)
+        ).scalars().first()
+    if not user or not verify_password(obj_in.password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=_AUTH_FAIL_MSG)
     return {
         'id': user.id,
         'username': user.username,
@@ -74,39 +115,117 @@ def login(obj_in: UserLoginSchema, session: Session = Depends(get_db)):
     }
 
 
-@router.post('/auth/', description='接口文档中认证表单提交')
+@router.post('/auth/', description='接口文档认证表单')
 def auth(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_db)):
-    """
-    接口文档中，用于接受认证表单提交的视图函数
-    :param form_data: 表单数据
-    :param session:
-    :return:
-    """
     user = _dao.get_user_by_username(session, form_data.username)
-    log.info(user)
-    if not user:  # 用户不存在
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f'用户名{form_data.username}，在数据库表中不存在!'
-        )
-    if not verify_password(form_data.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f'登录密码错误'
-        )
-    # 代码执行到此，则登录成功
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=_AUTH_FAIL_MSG)
     return {
-        'access_token': create_token(str(user.id) + ':' + user.username),  # 创建token
+        'access_token': create_token(str(user.id) + ':' + user.username),
         'token_type': 'bearer'
     }
 
 
-@router.patch('/users/{pk}/', response_model=UserSchema, description='根据主键，修改用户')
-def patch(pk: int, obj_in: CreateOrUpdateUserSchema,
-          session: Session = Depends(get_db)):
+@router.patch('/users/{pk}/', response_model=UserSchema, description='修改用户信息')
+def patch(pk: int, obj_in: CreateOrUpdateUserSchema, session: Session = Depends(get_db)):
     return _dao.update(session, pk, obj_in)
 
 
-@router.post('/users/delete/', description='根据主键批量删除多个用户')
+@router.post('/users/delete/', description='批量删除用户')
 def delete(ids: List[int], session: Session = Depends(get_db)):
     return _dao.deletes(session, ids)
+
+
+# ── 发送验证码（公开接口，白名单放行）────────────────────────
+
+class SendOtpSchema(BaseModel):
+    email: str
+    scene: str  # change_pwd | reset_pwd
+
+    @field_validator('scene')
+    @classmethod
+    def validate_scene(cls, v):
+        if v not in ('register', 'change_pwd', 'reset_pwd'):
+            raise ValueError('scene 只能是 register、change_pwd 或 reset_pwd')
+        return v
+
+
+@router.post('/send_otp/', description='发送邮箱验证码')
+def send_otp(obj_in: SendOtpSchema):
+    code = generate_otp()
+    try:
+        save_otp(obj_in.scene, obj_in.email, code)
+        send_otp_email(obj_in.email, code, obj_in.scene)
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {'ok': True, 'msg': f'验证码已发送至 {obj_in.email}'}
+
+
+# ── 修改密码（需登录）────────────────────────────────────────
+
+class ChangePwdSchema(BaseModel):
+    email: str       # 用于接收验证码的邮箱（需与账号绑定一致）
+    otp: str         # 邮箱验证码
+    new_password: str
+
+
+@router.post('/user/change_password/', description='修改密码（需登录 + 邮箱验证码）')
+def change_password(obj_in: ChangePwdSchema, request: Request, session: Session = Depends(get_db)):
+    username = request.state.username
+    user = _dao.get_user_by_username(session, username)
+    if not user:
+        raise HTTPException(status_code=404, detail='用户不存在')
+    # 校验邮箱与账号绑定一致
+    if not user.email or user.email.strip().lower() != obj_in.email.strip().lower():
+        raise HTTPException(status_code=400, detail='邮箱与账号不匹配')
+    # 校验 OTP
+    if not verify_otp('change_pwd', obj_in.email, obj_in.otp):
+        raise HTTPException(status_code=400, detail='验证码错误或已过期')
+    if len(obj_in.new_password) < 6:
+        raise HTTPException(status_code=400, detail='新密码至少6位')
+    _dao.update(session, user.id, CreateOrUpdateUserSchema(
+        username=user.username,
+        password=get_hashed_password(obj_in.new_password)
+    ))
+    return {'ok': True}
+
+
+# ── 重置密码（无需登录）──────────────────────────────────────
+
+class ResetPwdSchema(BaseModel):
+    email: str
+    otp: str
+    new_password: str
+
+
+@router.post('/reset_password/', description='忘记密码（邮箱验证码，无需登录）')
+def reset_password(obj_in: ResetPwdSchema, session: Session = Depends(get_db)):
+    from sqlalchemy import select
+    from db.system_mgt.models import UserModel
+    user = session.execute(
+        select(UserModel).where(UserModel.email == obj_in.email)
+    ).scalars().first()
+    if not user:
+        # 统一提示，不暴露邮箱是否存在
+        raise HTTPException(status_code=400, detail='验证码错误或已过期')
+    if not verify_otp('reset_pwd', obj_in.email, obj_in.otp):
+        raise HTTPException(status_code=400, detail='验证码错误或已过期')
+    if len(obj_in.new_password) < 6:
+        raise HTTPException(status_code=400, detail='新密码至少6位')
+    _dao.update(session, user.id, CreateOrUpdateUserSchema(
+        username=user.username,
+        password=get_hashed_password(obj_in.new_password)
+    ))
+    return {'ok': True}
+
+
+# ── 注销账号 ─────────────────────────────────────────────────
+
+@router.delete('/user/delete_account/', description='注销账号')
+def delete_account(request: Request, session: Session = Depends(get_db)):
+    username = request.state.username
+    user = _dao.get_user_by_username(session, username)
+    if not user:
+        raise HTTPException(status_code=404, detail='用户不存在')
+    _dao.deletes(session, [user.id])
+    return {'ok': True}

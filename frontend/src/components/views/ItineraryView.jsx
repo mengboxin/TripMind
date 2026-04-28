@@ -52,7 +52,7 @@ const ItineraryView = ({ onChat }) => {
             <span className="material-symbols-outlined" style={{position:"absolute",left:"14px",top:"50%",transform:"translateY(-50%)",
               color:C.onSurfaceVariant,fontSize:"20px"}}>location_on</span>
             <input value={dest} onChange={e=>setDest(e.target.value)}
-              placeholder="输入城市或国家，如：东京、巴黎、瑞士..."
+              placeholder="输入城市或国家，如：北京、巴黎、瑞士..."
               style={{width:"100%",padding:"14px 14px 14px 46px",borderRadius:"14px",fontSize:"14px",
                 background:C.surfaceContainer,border:"1px solid rgba(255,255,255,0.08)",
                 color:C.onSurface,outline:"none",boxSizing:"border-box"}}
@@ -132,7 +132,7 @@ const ItineraryView = ({ onChat }) => {
           <p style={{fontSize:"13px",fontWeight:"600",color:C.onSurfaceVariant,marginBottom:"14px"}}>快捷模板</p>
           <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
             {[
-              "帮我规划东京7天文化美食之旅，预算15000元",
+              "帮我规划北京7天历史文化之旅，预算15000元",
               "设计一份巴厘岛5天海岛度假行程，适合情侣",
               "规划瑞士阿尔卑斯10天自驾游路线",
               "制定巴黎5天艺术探索行程，包含博物馆和美食",
