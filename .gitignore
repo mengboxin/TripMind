@@ -1,4 +1,4 @@
-# Python
+# ===== Python =====
 __pycache__/
 *.py[cod]
 *.pyo
@@ -12,35 +12,44 @@ build/
 venv/
 env/
 
-# 环境变量
+# ===== 环境变量 & 敏感配置 =====
 .env
+.env.*
 *.env
+backend/config/production.yml
 
-# 数据库文件
+# ===== 日志 =====
+logs/
+*.log
+backend/logs/
+
+# ===== 数据库文件 =====
 *.db
 *.sqlite3
 
-# 大型 SQL 数据文件
+# ===== 大型 SQL 数据文件 =====
 backend/travel2.sql
 backend/travel22.sql
 
-# 配置文件（含敏感信息）
-backend/config/production.yml
+# ===== Node =====
+node_modules/
+frontend/dist/
+admin/dist/
 
-# 日志
-logs/
-*.log
+# ===== Vite 缓存 =====
+**/.vite/
+.vite/
 
-# IDE
+# ===== IDE =====
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Node
-node_modules/
-frontend/dist/
-
-# 系统
+# ===== 系统 =====
 .DS_Store
 Thumbs.db
+
+# ===== 备份文件 =====
+*.bak
+*.backup
